@@ -1,0 +1,15 @@
+<Project>
+
+    <PropertyGroup>
+        <WarningsAsErrors>nullable</WarningsAsErrors>
+        <NoWarn>$(NoWarn);CA1873</NoWarn>
+
+        <Authors>Liam Thompson</Authors>
+        <PackageProjectUrl>https://github.com/Liamth99/AotObjectMapper</PackageProjectUrl>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="LOCAT" Version="1.3.2" PrivateAssets="all"/>
+    </ItemGroup>
+
+</Project>
