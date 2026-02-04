@@ -1,13 +1,15 @@
 # AotObjectMapper
-![NuGet Version](https://img.shields.io/nuget/v/AotObjectMapper.svg)
-![NuGet Downloads](https://img.shields.io/nuget/dt/AotObjectMapper.svg)
-![GitHub Release](https://img.shields.io/github/v/release/Liamth99/AotObjectMapper)
-![License](https://img.shields.io/github/license/Liamth99/AotObjectMapper)
+[![NuGet Version](https://img.shields.io/nuget/v/AotObjectMapper.svg)](https://www.nuget.org/packages/AotObjectMapper/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/AotObjectMapper.svg)](https://www.nuget.org/packages/AotObjectMapper/)
+[![GitHub Release](https://img.shields.io/github/v/release/Liamth99/AotObjectMapper)](https://github.com/Liamth99/AotObjectMapper/releases)
+[![License](https://img.shields.io/github/license/Liamth99/AotObjectMapper)](https://github.com/Liamth99/AotObjectMapper/blob/master/LICENSE)
 
 AotObjectMapper is a C# Roslyn source generator for compile-time object mapping.
 
+This project was created primarily as a personal learning exercise and proof of concept. And may not be suitable for production use until v1.0.0
+
 <p align="center">
-<img src="/banner1280x640.png" alt="Simple Icons" height=256>
+<img src="/banner1280x640.png" alt="AotObjectMapper banner" height="256">
 </p>
 
 # Installation
@@ -41,47 +43,37 @@ class User
     public required string         LastName    { get; set; }
     public required DateTimeOffset DateOfBirth { get; set; }
     public required string         Secret      { get; set; }
-
 }
 
 public class UserDto
 {
-    public Guid     Id           { get; init; }
-    public string   FirstName    { get; init; } = String.Empty;
-    public string?  MiddleName   { get; init; }
-    public string   LastName     { get; init; } = String.Empty;
-    public int      DayOfBirth   { get; init; }
-    public int      MonthOfBirth { get; init; }
-    public int      YearOfBirth  { get; init; }
-    public TimeOnly TimeOfBirth  { get; init; }
+    public Guid     Id           { get; set; }
+    public string   FirstName    { get; set; } = String.Empty;
+    public string?  MiddleName   { get; set; }
+    public string   LastName     { get; set; } = String.Empty;
+    public int      DayOfBirth   { get; set; }
+    public int      MonthOfBirth { get; set; }
+    public int      YearOfBirth  { get; set; }
+    public TimeOnly TimeOfBirth  { get; set; }
 }
 ```
 
 ## Creating A Mapper
 
-For a basic mapper all you need is a `GenerateMapper` and `Map<TSource, TDestination>` Attribute on a partial class. Below is an example for a functional mapper to convert a `User` To a `UserDto`.
+For a basic mapper, all you need is a `GenerateMapper` and one or more `Map<TSource, TDestination>` attributes on a partial class.
+
+Below is an example mapper that converts a User to a UserDto.
 
 ```csharp
 [GenerateMapper]
 [Map<User, UserDto>]
 public partial class UserMapper;
 ```
+When the project is built, the mapper will generate a static `Map` method on `UserMapper` which will map Id, FirstName, MiddleName and LastName.
 
-Our new mapper will automatically generate a static method called `Map` on the `UserMapper` class that returns the following when the project is built:
+The remaining members cannot be mapped automatically because they differ in type and/or name, or do not exist on one of the classes.
 
-```csharp
-new UserDto
-{
-    Id = source.Id,
-    FirstName = source.FirstName,
-    MiddleName = source.MiddleName,
-    LastName = source.LastName,
-};
-```
-
-The other members cannot be automatically mapped as they differ in Type and or name. Or they dont exist on one our classes. 
-
-Multiple mapper attributes can be added to a single mapper class.
+Multiple Map attributes can be added to a single mapper class:
 ```csharp
 [GenerateMapper]
 [Map<User, UserDto>, Map<UserDto, User>]
@@ -89,7 +81,8 @@ public partial class UserMapper;
 ```
 
 ## MapperContext
-For some mapping actions, a context is required to manage state, prevent issues like infinite recursion, or provide custom data. If you don't pass one to a mapping method, a new default instance is created automatically.
+Some mapping scenarios require a context to manage state, prevent issues such as infinite recursion, or provide additional data.
+If no context is passed to a mapping method, a default instance is created automatically.
 
 ```csharp
 var context = new MapperContext(maxDepth: 50);
@@ -99,12 +92,12 @@ context.AdditionalContext.Add("ExtraMetadata", ....);
 var dto = UserMapper.Map(user, context);
 ```
 
-The context also allows for reference preservation which is convered later.
+The context also supports reference preservation, which is covered later.
 
 # Customization
 
 ## Ignore Members
-Specific members can be ignored for a mapping method, the example below skips the Id and MiddleName.
+Specific members can be ignored for a mapping. The example below skips `Id` and `MiddleName`.
 
 ```csharp
 [GenerateMapper]
@@ -112,7 +105,7 @@ Specific members can be ignored for a mapping method, the example below skips th
 public partial class UserMapper;
 ```
 ## Specify Map Method Name
-Map methods will automatically be named 'Map' but can be overrider as shown below.
+Map methods are named `Map` by default but can be overridden as shown below.
 
 ```csharp
 [GenerateMapper]
@@ -121,12 +114,14 @@ public partial class UserMapper;
 ```
 
 ## Null Value Handling
-While Mapping between objects with required members, or when treating null warnings as errors you may get complier errors. 
-To fix these either adjust the configuration to map all the appropriate members with the customization options or suppress 
-these issues by passing the `SuppressNullWarnings` option flag when creating the mapper `[GenerateMapper(options: MappingOptions.SuppressNullWarnings)]`.
+When mapping between objects with required members, or when treating nullable warnings as errors, you may encounter compiler errors.
+
+To resolve this, either configure mappings for all required members using customization options, or suppress these warnings by passing the `SuppressNullWarnings` flag:
 
 ## IConvertable Members
-Any source Member that inherits IConvertable and can convert to a destination member with the same name can be converted. Add default IFormatProviders with `UseFormatProvider` or for specific type conversions `UseFormatProvider<T1, T2>`.
+Any source member that implements `IConvertible` and can convert to a destination member with the same name can be mapped automatically.
+
+Add default format providers with `UseFormatProvider`, or specify providers for specific conversions using `UseFormatProvider<TSource, TDestination>`.
 
 ```csharp
 [GenerateMapper(options: MappingOptions.AllowIConvertable)]
@@ -144,20 +139,22 @@ public partial class MapperClass
 ```
 
 ## Enums
-By default enums are mapped by field name and default to a bitwise zero value if no field is found.
+By default, enums are mapped by field name and fall back to the zero value if no matching field is found.
 
-Override enum mapping to values with:
+Map enums by value instead:
 ```csharp
 [GenerateMapper(options: MappingOptions.MapEnumsByValue)]
 ```
 
-And throw exceptions when no matching field is found using:
+Throw an exception when no matching enum value is found:
 ```csharp
 [GenerateMapper(options: MappingOptions.ThrowExceptionOnUnmappedEnum)]
 ```
+note: this does nothing if `MapEnumsByValue` is set.
 
-## Manaul Memebr Handling
-To handle mapping between the diffent date of birth members the `ForMember<TSource, TDestination>(mapMethodName, memberName)` can specify methods to convert these values. `mapMethodName` will default to Map.
+## Manaul Memeber Handling
+To map between members that differ (such as the date-of-birth fields), use `ForMember<TSource, TDestination>` to specify custom conversion methods.
+mapMethodName defaults to Map.
 
 ```csharp
 [GenerateMapper(options: MappingOptions.SuppressNullWarnings)]
@@ -183,10 +180,10 @@ public partial class UserMapper
 }
 ```
 
-Methods must provide the SourceType as the first argument and optionally provide a `MapperContext` as the second.
+Methods must take the source type as the first parameter and may optionally accept a `MapperContext` as the second.
 
 ## Nested Mapping
-Nested objects can user other mappers to convert between objects using `UseMap<TMapGenerator, TSource, TDestination>`
+Nested objects can use other mappers via `UseMap<TMapGenerator, TSource, TDestination>`
 
 ```csharp
 // Layer 1: Company Mapper
@@ -208,7 +205,7 @@ public partial class EmployeeMapper;
 ```
 
 ## Reference Preservation
-Circular references will infinitley try to map, adding the `PreserveReferences` flag will prevent this as well as preventing mapping the same object multiple times.
+Circular references can cause infinite mapping loops. Enabling `PreserveReferences` prevents this and ensures the same object is not mapped multiple times.
 
 ```csharp
 public class Parent
@@ -232,7 +229,7 @@ public partial class ParentMapper;
 public partial class ChildMapper;
 ```
 
-## IEnumerabl and Collection Types
+## IEnumerable and Collection Types
 TBD
 
 ## Pre/Post map Actions
