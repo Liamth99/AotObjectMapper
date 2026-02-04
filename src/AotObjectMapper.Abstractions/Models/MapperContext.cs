@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.Serialization;
+using System.Text;
 using AotObjectMapper.Abstractions.Exceptions;
 
 namespace AotObjectMapper.Abstractions.Models;
@@ -16,8 +16,17 @@ public class MapperContext
 
     private string DebugString()
     {
-        // TODO
-        throw new Exception();
+        StringBuilder sb = new();
+
+        sb.Append($"Depth:{_depth}");
+        if (_maxDepth is not null)
+            sb.Append($"/{_maxDepth}");
+
+#if DEBUG
+        sb.Append($" TotalMaps:{TotalMaps} ByReference:{TotalReferencedObjects}");
+#endif
+
+        return sb.ToString();
     }
 
     public MapperContext(int? maxDepth = null)
@@ -89,7 +98,7 @@ public class MapperContext
         {
 #if DEBUG
             TotalReferencedObjects++;
-        #endif
+#endif
             return (TDestination)destination;
         }
 

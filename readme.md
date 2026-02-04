@@ -8,6 +8,14 @@ AotObjectMapper is a C# Roslyn source generator for compile-time object mapping.
 
 This project was created primarily as a personal learning exercise and proof of concept. And may not be suitable for production use until v1.0.0
 
+The main goals of this project are:
+- Gaining hands-on experience with Roslyn incremental source generators
+- Designing an AOT- and trimming-friendly alternative to reflection-based mappers
+- Providing feature parity with mature mapping libraries such as AutoMapper or Mapster
+- Exploring compile-time code generation, diagnostics, and analyzers
+- Experimenting with API design and developer experience in attribute driven tooling
+- Handling complex mapping scenarios such as recursion, reference preservation, enum strategies, and custom member mappings
+
 <p align="center">
 <img src="/banner1280x640.png" alt="AotObjectMapper banner" height="256">
 </p>
@@ -29,7 +37,7 @@ dotnet add package AotObjectMapper
 
 3. Install the latest version
 
-Both methods will automatically add `AotObjectMapper.Core` and `AotObjectMapper.Analyzers`.
+Both methods will automatically add `AotObjectMapper.Abstractions` and `AotObjectMapper.Analyzers`.
 
 # Quick Start
 
@@ -237,3 +245,7 @@ Comming soon
 
 ## Inheritence and Interfaces
 TBD
+
+# Benchmarks
+
+<img src="/Benchmarks/MappingBenchmarks/BenchmarkSummary.png" alt="Benchmark Summary">
