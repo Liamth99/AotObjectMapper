@@ -248,6 +248,6 @@ TBD
 
 # Benchmarks
 
-Many core features of AotObjectMapper are still missing so performance benchmarks may not be accurate.
+Many core features of AotObjectMapper are still missing so performance benchmarks may not be accurate, however each benchmark is fully functional.
 
 <img src="/Benchmarks/MappingBenchmarks/BenchmarkSummary.png" alt="Benchmark Summary">
