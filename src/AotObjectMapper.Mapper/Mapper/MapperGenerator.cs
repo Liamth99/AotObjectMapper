@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -96,15 +94,6 @@ public class MapperGenerator : IIncrementalGenerator
         sb.AppendLine($"            [EditorBrowsable(EditorBrowsableState.Never)] // Does not work with ReSharper.");
         sb.AppendLine($"            public static void Populate({info.DestinationType.ToDisplayString()} destination, {info.SourceType.ToDisplayString()} source, MapperContext context)");
         sb.AppendLine($"            {{");
-        sb.AppendLine($"                 if (source is null)");
-        sb.AppendLine($"                     throw new ArgumentNullException(nameof(source));");
-        sb.AppendLine("");
-        sb.AppendLine($"                 if (destination  is null)");
-        sb.AppendLine($"                     throw new ArgumentNullException(nameof(destination ));");
-        sb.AppendLine("");
-        sb.AppendLine($"                 if (context is null)");
-        sb.AppendLine($"                     throw new ArgumentNullException(nameof(context));");
-        sb.AppendLine($"");
         sb.AppendLine($"                 // Pre Map Actions");
         sb.AppendLine($"                 context.IncrementDepth();");
         sb.AppendLine($"{string.Join("\n", info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"                 {x.Method.Name}(source, destination{(x.Method.Parameters.Length is 3 ? ", context" : "")});"))}");
@@ -131,9 +120,6 @@ public class MapperGenerator : IIncrementalGenerator
         {
             mapMethod =
                 $$"""
-                              if (source is null)
-                                  throw new ArgumentNullException(nameof(source));
-
                               context ??= new MapperContext();
                               
                               return context.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(source, context, static () => {{Utils.BlankTypeConstructor(info.DestinationType)}}, {{info.DestinationType.Name}}_{{info.MethodName}}Utils.Populate);
@@ -144,9 +130,6 @@ public class MapperGenerator : IIncrementalGenerator
         {
             mapMethod =
                 $$"""
-                              if (source is null)
-                                  throw new ArgumentNullException(nameof(source));
-                  
                               context ??= new MapperContext();
                   
                               // Pre Map Actions

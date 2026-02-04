@@ -11,26 +11,26 @@ using Microsoft.Extensions.Logging;
 namespace MappingBenchmarks;
 
 [AotObjectMapper.Abstractions.Attributes.GenerateMapper]
-[Map<Simple, SimpleDto>]
-public partial class AotObjectMapperSimpleMapper;
+[Map<SimpleStruct, SimpleStructDto>]
+public partial class AotObjectMapperSimpleStructMapper;
 
 [Riok.Mapperly.Abstractions.Mapper]
-public partial class MapperlySimpleMapper
+public partial class MapperlySimpleStructMapper
 {
-    public partial SimpleDto SimpleToDto(Simple simple);
+    public partial SimpleStructDto SimpleToDto(SimpleStruct simple);
 }
 
 [MemoryDiagnoser(displayGenColumns: false)]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [CategoriesColumn]
-public class SimpleBenchmark
+public class SimpleStructBenchmark
 {
-    private Simple _source = null!;
+    private SimpleStruct _source;
 
     [GlobalSetup]
     public void Setup()
     {
-        _source = new Simple
+        _source = new SimpleStruct
         {
             Id                = 1,
             Name              = "Test",
@@ -45,16 +45,16 @@ public class SimpleBenchmark
 
         var config = new MapperConfiguration(cfg =>
                                              {
-                                                 cfg.CreateMap<Simple, SimpleDto>();
+                                                 cfg.CreateMap<SimpleStruct, SimpleStructDto>();
                                              }, loggerFactory);
 
         _autoMapper           = config.CreateMapper();
 
-        _mapperlySimpleMapper = new MapperlySimpleMapper();
+        _mapperlySimpleStructMapper = new MapperlySimpleStructMapper();
         _ctx                  = new MapperContext();
 
-        _ = _source.Adapt<SimpleDto>();          // warm Mapster
-        _ = _autoMapper.Map<SimpleDto>(_source); // warm AutoMapper
+        _ = _source.Adapt<SimpleStructDto>();          // warm Mapster
+        _ = _autoMapper.Map<SimpleStructDto>(_source); // warm AutoMapper
     }
 
     // -----------------
@@ -64,14 +64,14 @@ public class SimpleBenchmark
     private MapperContext _ctx = null!;
 
     [Benchmark(Description = "> AotObjectMapper"), BenchmarkCategory("Source Gen"), WarmupCount(10)]
-    public SimpleDto AotObjectMapper() => AotObjectMapperSimpleMapper.Map(_source, _ctx);
+    public SimpleStructDto AotObjectMapper() => AotObjectMapperSimpleStructMapper.Map(_source, _ctx);
 
     // -----------------
     // Mapster
     // -----------------
 
     [Benchmark, BenchmarkCategory("Reflection"), WarmupCount(10)]
-    public SimpleDto Mapster() => _source.Adapt<SimpleDto>();
+    public SimpleStructDto Mapster() => _source.Adapt<SimpleStructDto>();
 
     // -----------------
     // AutoMapper
@@ -80,25 +80,25 @@ public class SimpleBenchmark
     private IMapper _autoMapper = null!;
 
     [Benchmark, BenchmarkCategory("Reflection"), WarmupCount(10)]
-    public SimpleDto AutoMapper() => _autoMapper.Map<SimpleDto>(_source);
+    public SimpleStructDto AutoMapper() => _autoMapper.Map<SimpleStructDto>(_source);
 
     // -----------------
     // Maperly
     // -----------------
 
-    private MapperlySimpleMapper _mapperlySimpleMapper = null!;
+    private MapperlySimpleStructMapper _mapperlySimpleStructMapper = null!;
 
     [Benchmark, BenchmarkCategory("Source Gen"), WarmupCount(10)]
-    public SimpleDto Mapperly() => _mapperlySimpleMapper.SimpleToDto(_source);
+    public SimpleStructDto Mapperly() => _mapperlySimpleStructMapper.SimpleToDto(_source);
 
     // -----------------
     // Manual mapping (baseline)
     // -----------------
 
     [Benchmark(Baseline = true), BenchmarkCategory("Baseline"), WarmupCount(10)]
-    public SimpleDto Manual()
+    public SimpleStructDto Manual()
     {
-        return new SimpleDto
+        return new SimpleStructDto
         {
             Id                = _source.Id,
             Name              = _source.Name,
