@@ -11,8 +11,8 @@ WarmupCount=10
 ```
 | Method              | Categories | Mean      | Error     | StdDev    | Ratio | RatioSD | Allocated | Alloc Ratio |
 |-------------------- |----------- |----------:|----------:|----------:|------:|--------:|----------:|------------:|
-| Manual              | Baseline   |  5.483 ns | 0.0299 ns | 0.0265 ns |  1.00 |    0.01 |         - |          NA |
-| Mapperly            | Source Gen |  7.229 ns | 0.0416 ns | 0.0389 ns |  1.32 |    0.01 |         - |          NA |
-| &#39;&gt; AotObjectMapper&#39; | Source Gen |  8.085 ns | 0.0392 ns | 0.0367 ns |  1.47 |    0.01 |         - |          NA |
-| Mapster             | Reflection | 40.341 ns | 0.5335 ns | 0.4990 ns |  7.36 |    0.09 |      88 B |          NA |
-| AutoMapper          | Reflection | 55.085 ns | 0.3228 ns | 0.2695 ns | 10.05 |    0.07 |      88 B |          NA |
+| Manual              | Baseline   |  5.701 ns | 0.0529 ns | 0.0469 ns |  1.00 |    0.01 |         - |          NA |
+| Mapperly            | Source Gen |  7.775 ns | 0.1776 ns | 0.1900 ns |  1.36 |    0.03 |         - |          NA |
+| &#39;&gt; AotObjectMapper&#39; | Source Gen |  9.977 ns | 0.1194 ns | 0.1117 ns |  1.75 |    0.02 |         - |          NA |
+| Mapster             | Reflection | 26.458 ns | 0.5483 ns | 0.5631 ns |  4.64 |    0.10 |      88 B |          NA |
+| AutoMapper          | Reflection | 63.482 ns | 1.2783 ns | 1.2554 ns | 11.14 |    0.23 |      88 B |          NA |

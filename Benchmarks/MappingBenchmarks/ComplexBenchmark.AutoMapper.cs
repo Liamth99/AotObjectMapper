@@ -34,5 +34,10 @@ public partial class ComplexBenchmark
     private IMapper _autoMapper = null!;
 
     [Benchmark, BenchmarkCategory("Reflection"), WarmupCount(10)]
-    public PersonDto AutoMapper() => _autoMapper.Map<PersonDto>(_source);
+    public PersonDto AutoMapper()
+    {
+        var dto = _autoMapper.Map<PersonDto>(_source);
+        _consumer.Consume(dto);
+        return dto;
+    }
 }

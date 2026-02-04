@@ -1,17 +1,19 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.Order;
 using MappingBenchmarks.Models;
 
 namespace MappingBenchmarks;
 
-[MemoryDiagnoser(displayGenColumns: false)]
+[MemoryDiagnoser(displayGenColumns: true)]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [CategoriesColumn]
 public partial class ComplexBenchmark
 {
-    private Person _source = null!;
+    private Person   _source  = null!;
+    private Consumer _consumer = new();
 
     [GlobalSetup]
     public void Setup()

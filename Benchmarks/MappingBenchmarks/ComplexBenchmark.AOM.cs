@@ -39,6 +39,10 @@ public partial class AotObjectMapperCompanyMapper
 public partial class ComplexBenchmark
 {
     [Benchmark(Description = "> AotObjectMapper"), BenchmarkCategory("Source Gen"), WarmupCount(10)]
-    public PersonDto AotObjectMapper() => AotObjectMapperPersonMapper.Map(_source);
-
+    public PersonDto AotObjectMapper()
+    {
+        var dto = AotObjectMapperPersonMapper.Map(_source);
+        _consumer.Consume(dto);
+        return dto;
+    }
 }

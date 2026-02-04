@@ -26,5 +26,10 @@ public partial class ComplexBenchmark
     private TypeAdapterConfig _mapsterConfig = null!;
 
     [Benchmark, BenchmarkCategory("Reflection"), WarmupCount(10)]
-    public PersonDto Mapster() => _source.Adapt<PersonDto>(_mapsterConfig);
+    public PersonDto Mapster()
+    {
+        var dto = _source.Adapt<PersonDto>(_mapsterConfig);
+        _consumer.Consume(dto);
+        return dto;
+    }
 }

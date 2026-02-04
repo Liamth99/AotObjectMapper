@@ -21,10 +21,13 @@ public partial class MapperlyComplexMapper
 
 public partial class ComplexBenchmark
 {
-
     private MapperlyComplexMapper _mapperlyComplexMapper = null!;
 
     [Benchmark, BenchmarkCategory("Source Gen"), WarmupCount(10)]
-    public PersonDto Mapperly() => _mapperlyComplexMapper.MapPerson(_source);
-    
+    public PersonDto Mapperly()
+    {
+        var dto = _mapperlyComplexMapper.MapPerson(_source);
+        _consumer.Consume(dto);
+        return dto;
+    }
 }

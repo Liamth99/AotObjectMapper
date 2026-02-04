@@ -27,6 +27,7 @@ public partial class ComplexBenchmark
 
         dto.Employer.CEO = dto;
 
+        _consumer.Consume(dto);
         return dto;
     }
 }
