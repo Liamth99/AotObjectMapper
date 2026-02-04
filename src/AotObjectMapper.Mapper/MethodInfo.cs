@@ -147,7 +147,7 @@ public sealed class MethodInfo
             {
                 if (PreserveReferences)
                 {
-                    assignments.Add(new(destProp, $"context.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].Name}, {otherMapper.AttributeClass!.TypeArguments[2].Name}>(source.{srcProp.Name}, context, static () => {Utils.BlankTypeConstructor(otherMapper.AttributeClass!.TypeArguments[2])}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_{MethodName}Utils.Populate)"));
+                    assignments.Add(new(destProp, $"context.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>(source.{srcProp.Name}, context, static () => {Utils.BlankTypeConstructor(otherMapper.AttributeClass!.TypeArguments[2])}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_{MethodName}Utils.Populate)"));
                 }
                 else
                     assignments.Add(new(destProp, $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.{otherMapper.ConstructorArguments[0].Value}(source.{srcProp.Name}, context)"));

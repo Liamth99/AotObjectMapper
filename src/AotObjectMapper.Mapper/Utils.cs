@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 
 namespace AotObjectMapper.Mapper;
@@ -31,7 +29,7 @@ public static class Utils
         });
 
     public static string BlankTypeConstructor(ITypeSymbol type)
-        => $"new {type.Name}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
+        => $"new {type.ToDisplayString()}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
 
     public static string EnumMapSwitchStatement(string sourceObjectName, ITypeSymbol source, ITypeSymbol destination, bool throwIfInvalid)
     {
