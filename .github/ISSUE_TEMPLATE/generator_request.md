@@ -1,8 +1,8 @@
 ---
-name: Feature Request
-about: Suggest an idea for this project
+name: Generator Feature Request
+about: Suggest a feature for the generator
 title: ''
-labels: enhancement
+labels: enhancement, Generator
 assignees: Liamth99
 
 ---
