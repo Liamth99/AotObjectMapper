@@ -1,0 +1,23 @@
+﻿@page "/Enums"
+
+<PageTitle>Enums</PageTitle>
+
+<p>By default, enums are mapped by field name and fall back to the zero value if no matching field is found.</p>
+
+<p>Map enums by value instead:</p>
+
+<Markdown>
+```csharp
+[GenerateMapper(options: MappingOptions.MapEnumsByValue)]
+```
+</Markdown>
+
+<p>Throw an exception when no matching enum value is found:</p>
+
+<Markdown>
+```csharp
+[GenerateMapper(options: MappingOptions.ThrowExceptionOnUnmappedEnum)]
+```
+</Markdown>
+
+<p>note: this does nothing if MapEnumsByValue is set.</p>
