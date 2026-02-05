@@ -6,13 +6,7 @@
 
 <p>Below is an example mapper that converts a User to a UserDto.</p>
 
-<Markdown>
-```csharp
-[GenerateMapper]
-[Map&lt;User, UserDto&gt;]
-public partial class UserMapper;
-```
-</Markdown>
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@SingleMap />
 
 <p>When the project is built, the mapper will generate a static Map method on UserMapper which will map Id, FirstName, MiddleName and LastName.</p>
 
@@ -20,10 +14,24 @@ public partial class UserMapper;
 
 <p>Multiple Map attributes can be added to a single mapper class:</p>
 
-<Markdown>
-```csharp
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@MultiMap />
+
+@code
+{
+
+    const string SingleMap =
+"""
 [GenerateMapper]
-[Map&lt;User, UserDto&gt;, Map&lt;UserDto, User&gt;]
+[Map<User, UserDto>]
 public partial class UserMapper;
-```
-</Markdown>
+""";
+
+    const string MultiMap =
+"""
+[GenerateMapper]
+[Map<User, UserDto>, Map<UserDto, User>]
+public partial class UserMapper;
+""";
+
+
+}

@@ -4,10 +4,15 @@
 
 <p>Map methods are named Map by default but can be overridden as shown below.</p>
 
-<Markdown>
-```csharp
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+
+@code
+{
+    const string Code =
+"""
 [GenerateMapper]
-[Map&lt;User, UserDto&gt;(methodName: "MapUser")]
+[Map<User, UserDto>(methodName: "MapUser")]
 public partial class UserMapper;
-```
-</Markdown>
+""";
+}

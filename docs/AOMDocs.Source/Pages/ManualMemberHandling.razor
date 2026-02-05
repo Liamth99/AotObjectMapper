@@ -4,29 +4,34 @@
 
 <p>To map between members that differ (such as the date-of-birth fields), use ForMember&lt;TSource, TDestination&gt; to specify custom conversion methods. mapMethodName defaults to Map.</p>
 
-<Markdown>
-```csharp
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+<p>Methods must take the source type as the first parameter and may optionally accept a MapperContext as the second.</p>
+
+@code
+{
+    const string Code =
+"""
 [GenerateMapper(options: MappingOptions.SuppressNullWarnings)]
-[Map&lt;User, UserDto&gt;]
-[Map&lt;UserDto, User&gt;(methodName: "RevertMap")]
+[Map<User, UserDto>]
+[Map<UserDto, User>(methodName: "RevertMap")]
 public partial class UserMapper
 {
-    [ForMember&lt;User, UserDto&gt;(nameof(UserDto.DayOfBirth))]
-    public static int GetDayOfBirth(User source) =&gt; source.DateOfBirth.UtcDateTime.Day;
+    [ForMember<User, UserDto>(nameof(UserDto.DayOfBirth))]
+    public static int GetDayOfBirth(User source) => source.DateOfBirth.UtcDateTime.Day;
 
-    [ForMember&lt;User, UserDto&gt;(nameof(UserDto.MonthOfBirth))]
-    public static int GetMonthOfBirth(User source) =&gt; source.DateOfBirth.UtcDateTime.Month;
+    [ForMember<User, UserDto>(nameof(UserDto.MonthOfBirth))]
+    public static int GetMonthOfBirth(User source) => source.DateOfBirth.UtcDateTime.Month;
 
-    [ForMember&lt;User, UserDto&gt;(nameof(UserDto.YearOfBirth))]
-    public static int GetYearOfBirth(User source) =&gt; source.DateOfBirth.UtcDateTime.Year;
+    [ForMember<User, UserDto>(nameof(UserDto.YearOfBirth))]
+    public static int GetYearOfBirth(User source) => source.DateOfBirth.UtcDateTime.Year;
 
-    [ForMember&lt;User, UserDto&gt;(nameof(UserDto.TimeOfBirth))]
-    public static TimeOnly GetTimeOfBirth(User source) =&gt; new (source.DateOfBirth.UtcDateTime.TimeOfDay.Ticks);
+    [ForMember<User, UserDto>(nameof(UserDto.TimeOfBirth))]
+    public static TimeOnly GetTimeOfBirth(User source) => new (source.DateOfBirth.UtcDateTime.TimeOfDay.Ticks);
 
-    [ForMember&lt;UserDto, User&gt;(mapMethodName: nameof(RevertMap), memberName: nameof(User.DateOfBirth))]
+    [ForMember<UserDto, User>(mapMethodName: nameof(RevertMap), memberName: nameof(User.DateOfBirth))]
     public static DateTimeOffset GetDateOfBirth(UserDto source, MapperContext context)
-        =&gt; new DateTimeOffset(new DateOnly(source.YearOfBirth, source.MonthOfBirth, source.DayOfBirth), source.TimeOfBirth, TimeSpan.Zero);
+        => new DateTimeOffset(new DateOnly(source.YearOfBirth, source.MonthOfBirth, source.DayOfBirth), source.TimeOfBirth, TimeSpan.Zero);
 }
-Methods must take the source type as the first parameter and may optionally accept a MapperContext as the second.
-```
-</Markdown>
+""";
+}

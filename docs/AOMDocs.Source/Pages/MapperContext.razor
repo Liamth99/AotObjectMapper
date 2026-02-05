@@ -3,14 +3,18 @@
 
 <p>Some mapping scenarios require a context to manage state, prevent issues such as infinite recursion, or provide additional data. If no context is passed to a mapping method, a default instance is created automatically.</p>
 
-<Markdown>
-    ```csharp
-    var context = new MapperContext(maxDepth: 50);
-
-    context.AdditionalContext.Add("ExtraMetadata", ....);
-
-    var dto = UserMapper.Map(user, context);
-    ```
-</Markdown>
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
 <p>The context also supports reference preservation, which is covered later.</p>
+
+@code
+{
+    const string Code =
+"""
+var context = new MapperContext(maxDepth: 50);
+
+context.AdditionalContext.Add("ExtraMetadata", ....);
+
+var dto = UserMapper.Map(user, context);
+""";
+}

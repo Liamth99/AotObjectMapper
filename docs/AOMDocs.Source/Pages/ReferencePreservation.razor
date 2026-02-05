@@ -4,9 +4,12 @@
 
 <p>Circular references can cause infinite mapping loops. Enabling PreserveReferences prevents this and ensures the same object is not mapped multiple times.</p>
 
-<Markdown>
-```csharp
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
+@code
+{
+    const string Code =
+"""
 public class Parent
 {
     public Child Child { get; set; }
@@ -18,13 +21,13 @@ public class Child
 }
 
 [GenerateMapper(MappingOptions.PreserveReferences)]
-[Map&lt;Parent, ParentDto&gt;]
-[UseMap&lt;ChildMapper, Child, ChildDto&gt;]
+[Map<Parent, ParentDto>]
+[UseMap<ChildMapper, Child, ChildDto>]
 public partial class ParentMapper;
 
 [GenerateMapper(MappingOptions.PreserveReferences)]
-[Map&lt;Child, ChildDto&gt;]
-[UseMap&lt;ParentMapper, Parent, ParentDto&gt;]
+[Map<Child, ChildDto>]
+[UseMap<ParentMapper, Parent, ParentDto>]
 public partial class ChildMapper;
-```
-</Markdown>
+""";
+}

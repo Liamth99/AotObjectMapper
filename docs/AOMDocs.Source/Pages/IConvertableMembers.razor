@@ -6,19 +6,23 @@
 
 <p>Add default format providers with UseFormatProvider, or specify providers for specific conversions using UseFormatProvider&lt;TSource, TDestination&gt;.</p>
 
-<Markdown>
-```csharp
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+@code
+{
+    const string Code =
+"""
 [GenerateMapper(options: MappingOptions.AllowIConvertable)]
 public partial class MapperClass
 {
     // Default
     [UseFormatProvider]
-    private static IFormatProvider Default =&gt; CultureInfo.CurrentCulture;
+    private static IFormatProvider Default => CultureInfo.CurrentCulture;
 
-    // int &lt;-&gt; string only
-    [UseFormatProvider&lt;int, string&gt;]
-    [UseFormatProvider&lt;string, int&gt;]
-    private static IFormatProvider IntStringFormat =&gt; CultureInfo.InvariantCulture;
+    // int <-> string only
+    [UseFormatProvider<int, string>]
+    [UseFormatProvider<string, int>]
+    private static IFormatProvider IntStringFormat => CultureInfo.InvariantCulture;
 }
-```
-</Markdown>
+""";
+}

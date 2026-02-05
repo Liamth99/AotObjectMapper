@@ -6,18 +6,10 @@
 
 <p>Map enums by value instead:</p>
 
-<Markdown>
-```csharp
-[GenerateMapper(options: MappingOptions.MapEnumsByValue)]
-```
-</Markdown>
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code="[GenerateMapper(options: MappingOptions.MapEnumsByValue)]" />
 
 <p>Throw an exception when no matching enum value is found:</p>
 
-<Markdown>
-```csharp
-[GenerateMapper(options: MappingOptions.ThrowExceptionOnUnmappedEnum)]
-```
-</Markdown>
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code="[GenerateMapper(options: MappingOptions.ThrowExceptionOnUnmappedEnum)]" />
 
 <p>note: this does nothing if MapEnumsByValue is set.</p>
