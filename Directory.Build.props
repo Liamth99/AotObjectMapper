@@ -5,7 +5,7 @@
         <NoWarn>$(NoWarn);CA1873</NoWarn>
 
         <Authors>Liam Thompson</Authors>
-        <PackageProjectUrl>https://github.com/Liamth99/AotObjectMapper</PackageProjectUrl>
+        <PackageProjectUrl>https://liamth99.github.io/AotObjectMapper/</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Liamth99/AotObjectMapper</RepositoryUrl>
 
         <IsPackable>false</IsPackable> <!-- Can be overriden by pacakges that need to be packed. -->
