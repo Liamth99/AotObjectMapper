@@ -1,0 +1,33 @@
+﻿@page "/ReferencePreservation"
+
+<PageTitle>Reference Preservation</PageTitle>
+
+<p>Circular references can cause infinite mapping loops. Enabling PreserveReferences prevents this and ensures the same object is not mapped multiple times.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+@code
+{
+    const string Code =
+"""
+public class Parent
+{
+    public Child Child { get; set; }
+}
+
+public class Child
+{
+    public Parent Parent { get; set; }
+}
+
+[GenerateMapper(MappingOptions.PreserveReferences)]
+[Map<Parent, ParentDto>]
+[UseMap<ChildMapper, Child, ChildDto>]
+public partial class ParentMapper;
+
+[GenerateMapper(MappingOptions.PreserveReferences)]
+[Map<Child, ChildDto>]
+[UseMap<ParentMapper, Parent, ParentDto>]
+public partial class ChildMapper;
+""";
+}

@@ -4,6 +4,7 @@
     <Project Path="test/AotObjectMapper.Tests/AotObjectMapper.Tests.csproj" />
   </Folder>
   <Project Path="Benchmarks/MappingBenchmarks/MappingBenchmarks.csproj" />
+  <Project Path="docs/AOMDocs.Source/AOMDocs.Source.csproj" />
   <Project Path="src/AotObjectMapper.Abstractions/AotObjectMapper.Abstractions.csproj" />
   <Project Path="src/AotObjectMapper.Mapper/AotObjectMapper.Mapper.csproj" />
   <Project Path="src/AotObjectMapper.Sample/AotObjectMapper.Sample.csproj" />

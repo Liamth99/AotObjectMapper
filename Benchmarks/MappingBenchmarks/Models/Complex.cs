@@ -74,6 +74,5 @@ public class CompanyDto
     public DateTime FoundedAt     { get; set; }
     public decimal  AnnualRevenue { get; set; }
 
-    // Reduced projection to break cycles
     public PersonDto CEO { get; set; } = null!;
 }

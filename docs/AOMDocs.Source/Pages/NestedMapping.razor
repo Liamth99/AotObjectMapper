@@ -1,0 +1,31 @@
+﻿@page "/NestedMapping"
+
+<PageTitle>Nested Mapping</PageTitle>
+
+<p>Nested objects can use other mappers via UseMap&lt;TMapGenerator, TSource, TDestination&gt;</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+
+@code
+{
+    const string Code =
+"""
+// Layer 1: Company Mapper
+[GenerateMapper]
+[Map<CompanyEntity, CompanyDto>]
+[UseMap<DepartmentMapper, DepartmentEntity, DepartmentDto>]
+public partial class CompanyMapper;
+
+// Layer 2: Department Mapper
+[GenerateMapper]
+[Map<DepartmentEntity, DepartmentDto>]
+[UseMap<EmployeeMapper, EmployeeEntity, EmployeeDto>("MapEmployee")]
+public partial class DepartmentMapper;
+
+// Layer 3: Employee Mapper
+[GenerateMapper]
+[Map<EmployeeEntity, EmployeeDto>("MapEmployee")]
+public partial class EmployeeMapper;
+""";
+}

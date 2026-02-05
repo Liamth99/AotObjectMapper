@@ -1,0 +1,18 @@
+﻿@page "/MapMethodName"
+
+<PageTitle>Map Method Name</PageTitle>
+
+<p>Map methods are named Map by default but can be overridden as shown below.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+
+@code
+{
+    const string Code =
+"""
+[GenerateMapper]
+[Map<User, UserDto>(methodName: "MapUser")]
+public partial class UserMapper;
+""";
+}

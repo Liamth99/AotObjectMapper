@@ -1,0 +1,17 @@
+﻿@page "/IgnoreMembers"
+
+<PageTitle>Ignore Members</PageTitle>
+
+<p>Specific members can be ignored for a mapping. The example below skips Id and MiddleName.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+@code
+{
+    const string Code =
+"""
+[GenerateMapper]
+[Map<User, UserDto>(ignoredMembers: [nameof(User.Id), nameof(User.MiddleName)])]
+public partial class UserMapper;
+""";
+}

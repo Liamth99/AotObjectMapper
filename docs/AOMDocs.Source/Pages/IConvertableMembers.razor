@@ -1,0 +1,28 @@
+﻿@page "/IConvertableMembers"
+
+<PageTitle>IConvertable Members</PageTitle>
+
+<p>Any source member that implements IConvertible and can convert to a destination member with the same name can be mapped automatically.</p>
+
+<p>Add default format providers with UseFormatProvider, or specify providers for specific conversions using UseFormatProvider&lt;TSource, TDestination&gt;.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+@code
+{
+    const string Code =
+"""
+[GenerateMapper(options: MappingOptions.AllowIConvertable)]
+public partial class MapperClass
+{
+    // Default
+    [UseFormatProvider]
+    private static IFormatProvider Default => CultureInfo.CurrentCulture;
+
+    // int <-> string only
+    [UseFormatProvider<int, string>]
+    [UseFormatProvider<string, int>]
+    private static IFormatProvider IntStringFormat => CultureInfo.InvariantCulture;
+}
+""";
+}

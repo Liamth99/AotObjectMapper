@@ -1,0 +1,58 @@
+﻿@inherits LayoutComponentBase
+<div class="bb-page">
+
+    <Sidebar2 @ref="sidebar"
+              ImageSrc="icon-192.png"
+              Title="AotObjectMapper"
+              DataProvider="SidebarDataProvider"
+              Href=""
+              Style="background-color: var(--bs-primary)"/>
+
+    <main>
+        <div class="bb-top-row px-4 d-flex justify-content-end">
+            <a href="https://github.com/Liamth99/AotObjectMapper" target="_blank">
+                <Icon Name="IconName.Github" Size="IconSize.x1" Color="IconColor.Body"/>
+            </a>
+        </div>
+
+        <article class="content px-4">
+            <div class="py-2">@Body</div>
+        </article>
+    </main>
+</div>
+
+@code {
+    Sidebar2                           sidebar  = default!;
+    public static IEnumerable<NavItem> NavItems { get; private set; } = default!;
+
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        NavItems = new List<NavItem>
+        {
+            new (){ Id = "1", Text  = "Home", Href         = "/", IconName             = IconName.HouseDoorFill, Match=NavLinkMatch.All, },
+            new (){ Id = "2", Text  = "Installation" ,Href = "/Installation", IconName = IconName.Download,      },
+            new (){ Id = "3", Text  = "Usage", IconName = IconName.Info },
+            new (){ Id = "4", Text  = "Sample Classes", Href = "/Usage", ParentId         = "3", },
+            new (){ Id = "5", Text  = "Basic Mapper", Href = "/BasicMapper", ParentId   = "3", },
+            new (){ Id = "6", Text  = "Mapper Context", Href = "/MapperContext", ParentId = "3", },
+            new (){ Id = "7", Text  = "Customization", ParentId = "3", IconName = IconName.GearFill},
+            new (){ Id = "8", Text  = "Ignore Members", Href = "/IgnoreMembers", ParentId = "7", },
+            new (){ Id = "9", Text  = "Map Method Name", Href = "/MapMethodName", ParentId = "7", },
+            new (){ Id = "10", Text = "Null Value Handling", Href = "/NullValueHandling", ParentId = "7", },
+            new (){ Id = "11", Text = "IConvertable Members", Href = "/IConvertableMembers", ParentId = "7", },
+            new (){ Id = "12", Text = "Enums", Href = "/Enums", ParentId = "7", },
+            new (){ Id = "13", Text = "Manual Member Handling", Href = "/ManualMemberHandling", ParentId = "7", },
+            new (){ Id = "14", Text = "Nested Mapping", Href = "/NestedMapping", ParentId = "7", },
+            new (){ Id = "15", Text = "Reference Preservation", Href = "/ReferencePreservation", ParentId = "7", },
+            new (){ Id = "16", Text = "IEnumerable & Collections", Href = "/IEnumerableAndCollections", ParentId = "7", },
+            new (){ Id = "17", Text = "Pre/Post Map Actions", Href = "/PrePostMapActions", ParentId = "7", },
+            new (){ Id = "18", Text = "Benchmarks", Href = "/Benchmarks", },
+        };
+    }
+
+    private async Task<Sidebar2DataProviderResult> SidebarDataProvider(Sidebar2DataProviderRequest  request)
+    {
+        return await Task.FromResult(request.ApplyTo(NavItems));
+    }
+}
