@@ -10,5 +10,7 @@
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 public sealed class PreMapAttribute<TSource, TDestination>(int priority = int.MaxValue) : Attribute
 {
+    /// Gets the execution priority of the pre-mapping method. Methods with a lower
+    /// priority value are executed before those with a higher priority value.
     public int Order { get; } = priority;
 }

@@ -8,6 +8,7 @@ namespace AotObjectMapper.Abstractions.Enums;
 [Flags]
 public enum MappingOptions : uint
 {
+    /// Default mapping behaviour.
     None = 0,
 
     /// Specifies that objects implementing <see cref="System.IConvertible"/> can be used during the mapping process.

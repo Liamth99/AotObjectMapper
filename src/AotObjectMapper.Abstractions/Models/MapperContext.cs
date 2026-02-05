@@ -5,12 +5,25 @@ using AotObjectMapper.Abstractions.Exceptions;
 
 namespace AotObjectMapper.Abstractions.Models;
 
+/// <summary>
+/// Represents a context used in object mapping operations, providing
+/// support for tracking mapping depth, total maps, and referenced objects.
+/// This context can store additional contextual information and manage
+/// operations related to object reuse and nested mappings.
+/// </summary>
 [DebuggerDisplay("{DebugString()}")]
 public class MapperContext
 {
 
 #if DEBUG
-    public int TotalMaps { get; set; }
+
+    /// Represents the total number of mapping operations performed within the context.
+    /// Used for debugging and tracking the performance of the mapping process.
+    public int TotalMaps { get;              set; }
+
+    /// Represents the total number of objects that are referenced during the mapping process.
+    /// This property is used to track how many previously instantiated or referenced objects
+    /// have been identified and reused, primarily for debugging and optimization purposes.
     public int TotalReferencedObjects { get; set; }
 #endif
 
@@ -29,20 +42,17 @@ public class MapperContext
         return sb.ToString();
     }
 
+    ///
     public MapperContext(int? maxDepth = null)
     {
         _maxDepth = maxDepth;
     }
 
-    /// <summary>
     /// Represents the current depth level of a mapping process.
-    /// </summary>
     public int Depth => _depth;
     private int _depth;
 
-    /// <summary>
     /// Specifies the maximum allowable depth for nested mapping operations within the context.
-    /// </summary>
     public int? MaxDepth => _maxDepth;
     private readonly int? _maxDepth;
 

@@ -14,8 +14,13 @@
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public sealed class MapAttribute<TSource, TDestination>(string methodName = MapAttribute<TSource, TDestination>.DefaultMapMethodName, params string[] ignoredMembers) : Attribute
 {
+    /// Represents the default method name used for generating mapping logic
+    /// when no custom method name is specified in the mapping configuration.
     public const string DefaultMapMethodName = "Map";
 
-    public string              MethodName     { get; } = methodName;
+    /// Gets the name of the method to be generated for the mapping logic.
+    public string MethodName     { get; } = methodName;
+
+    /// Represents the collection of member names that should be ignored during the mapping process.
     public IEnumerable<string> IgnoredMembers { get; } = ignoredMembers;
 }

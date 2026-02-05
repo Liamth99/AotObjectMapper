@@ -15,5 +15,7 @@
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 public sealed class PostMapAttribute<TSource, TDestination>(int priority = int.MaxValue) : Attribute
 {
+    /// Gets the execution priority of the post-mapping method. Methods with a lower
+    /// priority value are executed before those with a higher priority value.
     public int Order { get; } = priority;
 }

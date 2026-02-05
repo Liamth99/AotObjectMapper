@@ -1,10 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+
         <TargetFramework>netstandard2.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
+
+        <IsPackable>true</IsPackable>
+        <Deterministic>true</Deterministic>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <PackageId>AotObjectMapper.Abstractions</PackageId>
+        <Title>AotObjectMapper Abstractions</Title>
+        <PackageTags>Roslyn,Mapper,SourceGen</PackageTags>
+        <Description>Abstractions for AotObjectMapper. AotObjectMapper.Mapper is also required.</Description>
+
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageIcon>icon128.png</PackageIcon>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="../../icon128.png" Pack="true" PackagePath="\"/>
+        <None Include="../../readme.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
 </Project>

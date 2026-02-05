@@ -11,6 +11,9 @@
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class MapToAttribute<TSource, TDestination>(string sourcePropertyName, string destinationPropertyName) : Attribute
 {
+    /// Gets the name of the property or field in the source class that is mapped to a corresponding property or field in the destination class.
     public string SourcePropertyName      { get; } = sourcePropertyName;
+
+    /// Gets the name of the property or field in the destination class that is mapped from a corresponding property or field in the source class.
     public string DestinationPropertyName { get; } = destinationPropertyName;
 }

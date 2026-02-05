@@ -22,5 +22,6 @@ namespace AotObjectMapper.Abstractions.Attributes;
 public sealed class UseMapAttribute<TMapGenerator, TSource, TDestination>(string methodName = MapAttribute<TSource, TDestination>.DefaultMapMethodName) : Attribute
     where TMapGenerator : IMapper<TSource, TDestination>
 {
+    /// Gets the name of the mapping method to be used for generating the mapping logic between the source and destination types.
     public string MethodName { get; } = methodName;
 }

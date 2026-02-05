@@ -8,5 +8,6 @@ namespace AotObjectMapper.Abstractions.Attributes;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class GenerateMapperAttribute(MappingOptions options = MappingOptions.None) : Attribute
 {
+    /// Specifies options that can be used to modify the behavior of object mapping operations.
     public MappingOptions MappingOptions { get; } = options;
 }

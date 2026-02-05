@@ -1,0 +1,43 @@
+﻿name: publish-package.yml
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+
+      - name: Set VERSION variable from tag or fallback
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          else
+            echo "VERSION=0.0.1-preview" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build --configuration Release /p:Version=${{ env.VERSION }}
+
+      - name: Test
+        run: dotnet test --configuration Release /p:Version=${{ env.VERSION }} --no-build
+
+      - name: Pack
+        run: dotnet pack --configuration Release /p:Version=${{ env.VERSION }}
+
+      - name: Push
+        run: dotnet nuget push **\*.nupkg --source 'https://api.nuget.org/v3/index.json' --api-key ${{ secrets.NUGETAPIKEY }} --skip-duplicate
