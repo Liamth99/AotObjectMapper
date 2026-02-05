@@ -22,7 +22,7 @@ The main goals of this project are:
 
 # Installation
 
-AotObjectMapper is distributed as a [NuGet package](https://www.nuget.org/packages/AotObjectMapper/).
+AotObjectMapper is distributed as a [NuGet package](https://www.nuget.org/packages/AotObjectMapper.Mapper/).
 
 ## Via .NET CLI
 ```shell
