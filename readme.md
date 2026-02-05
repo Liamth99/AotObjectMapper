@@ -1,6 +1,6 @@
 # AotObjectMapper
-[![NuGet Version](https://img.shields.io/nuget/v/AotObjectMapper.svg)](https://www.nuget.org/packages/AotObjectMapper/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/AotObjectMapper.svg)](https://www.nuget.org/packages/AotObjectMapper/)
+[![NuGet Version](https://img.shields.io/nuget/v/AotObjectMapper.Mapper.svg)](https://www.nuget.org/packages/AotObjectMapper.Mapper/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/AotObjectMapper.Mapper.svg)](https://www.nuget.org/packages/AotObjectMapper.Mapper/)
 [![GitHub Release](https://img.shields.io/github/v/release/Liamth99/AotObjectMapper)](https://github.com/Liamth99/AotObjectMapper/releases)
 [![License](https://img.shields.io/github/license/Liamth99/AotObjectMapper)](https://github.com/Liamth99/AotObjectMapper/blob/master/LICENSE)
 
@@ -17,7 +17,7 @@ The main goals of this project are:
 - Handling complex mapping scenarios such as recursion, reference preservation, enum strategies, and custom member mappings
 
 <p align="center">
-<img src="/banner1280x640.png" alt="AotObjectMapper banner" height="256">
+<img src="/docs/static/banner1280x640.png" alt="AotObjectMapper banner" height="256">
 </p>
 
 # Installation
@@ -55,4 +55,4 @@ Multiple Map attributes can be added to a single mapper class:
 [Map<User, UserDto>, Map<UserDto, User>]
 public partial class UserMapper;
 ```
-For more information visit the Docs (WIP)
+For more information visit the [Docs](https://liamth99.github.io/AotObjectMapper/)
