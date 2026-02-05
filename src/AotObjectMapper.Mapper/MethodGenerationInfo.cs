@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 
 namespace AotObjectMapper.Mapper;
 
-public sealed class MethodInfo
+public sealed class MethodGenerationInfo
 {
     public INamedTypeSymbol                   MapperType            { get; }
     public INamedTypeSymbol                   SourceType            { get;  }
@@ -32,7 +32,7 @@ public sealed class MethodInfo
     public bool ThrowExceptionOnUnmappedEnum {get; }
 
 
-    public MethodInfo(ITypeSymbol mapperType, ITypeSymbol sourceType, ITypeSymbol destinationType)
+    public MethodGenerationInfo(ITypeSymbol mapperType, ITypeSymbol sourceType, ITypeSymbol destinationType)
     {
         MapperType      = (INamedTypeSymbol)mapperType;
         SourceType      = (INamedTypeSymbol)sourceType;

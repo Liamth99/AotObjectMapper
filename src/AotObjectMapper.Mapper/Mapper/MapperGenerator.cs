@@ -60,7 +60,7 @@ public class MapperGenerator : IIncrementalGenerator
                 var sourceType      = mapAttr.AttributeClass!.TypeArguments[0];
                 var destinationType = mapAttr.AttributeClass!.TypeArguments[1];
 
-                var info = new MethodInfo((INamedTypeSymbol)mapper, sourceType, destinationType);
+                var info = new MethodGenerationInfo((INamedTypeSymbol)mapper, sourceType, destinationType);
 
                 var populateCode = GeneratePopulationMethod(compilation, info);
                 context.AddSource($"Populate_{destinationType.Name}_{(string)mapAttr.ConstructorArguments[0].Value!}_From_{sourceType.Name}_{i++}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
@@ -71,7 +71,7 @@ public class MapperGenerator : IIncrementalGenerator
         }
     }
 
-    private static string GeneratePopulationMethod(Compilation compilation, MethodInfo info)
+    private static string GeneratePopulationMethod(Compilation compilation, MethodGenerationInfo info)
     {
         StringBuilder sb                  = new();
         var           propertyAssignments = info.GeneratePropertyAssignments(compilation).ToArray();
@@ -110,7 +110,7 @@ public class MapperGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    private static string GenerateMapperMethod(Compilation compilation, MethodInfo info)
+    private static string GenerateMapperMethod(Compilation compilation, MethodGenerationInfo info)
     {
         var propertyAssignments = info.GeneratePropertyAssignments(compilation).ToArray();
 
@@ -169,7 +169,7 @@ public class MapperGenerator : IIncrementalGenerator
                  """;
     }
 
-    private static string GenerateMethodDocs(MethodInfo info)
+    private static string GenerateMethodDocs(MethodGenerationInfo info)
     {
         StringBuilder sb = new();
 
