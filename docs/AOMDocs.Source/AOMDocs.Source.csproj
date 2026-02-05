@@ -19,11 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="wwwroot\css\app.css" />
-    <None Include="wwwroot\css\app.css" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\src\AotObjectMapper.Abstractions\AotObjectMapper.Abstractions.csproj" />
   </ItemGroup>
 
