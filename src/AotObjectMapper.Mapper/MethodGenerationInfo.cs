@@ -7,20 +7,55 @@ namespace AotObjectMapper.Mapper;
 
 public sealed class MethodGenerationInfo
 {
-    public INamedTypeSymbol                   MapperType            { get; }
-    public INamedTypeSymbol                   SourceType            { get;  }
-    public IPropertySymbol[]                  SourceProperties      { get;  }
-    public INamedTypeSymbol                   DestinationType       { get;  }
-    public Dictionary<string,IPropertySymbol> DestinationProperties { get;  }
+    /// The type of the mapper being used in code generation annotated with a <see cref="GenerateMapperAttribute"/>.
+    public INamedTypeSymbol MapperType { get; }
 
-    public string       Namespace  { get;  }
-    public List<string> Usings     { get;  }
+    /// Represents the source type from which data is being mapped.
+    public INamedTypeSymbol SourceType { get;  }
 
-    public AttributeData[] OtherMappers   { get;  }
-    public IMethodSymbol[] MapperMethods  { get;  }
+    /// Represents the collection of readable properties from the source type used during the generation of mapping logic in a mapper.
+    public IPropertySymbol[] SourceProperties { get;  }
+
+    /// The type representing the destination object in the mapping process.
+    public INamedTypeSymbol DestinationType { get;  }
+
+    /// A dictionary representing the setable properties of the destination type.
+    public Dictionary<string, IPropertySymbol> DestinationProperties { get;  }
+
+    /// A dictionary that maps a type to a list of types it can polymorphically convert to in the context of object mapping.
+    /// This property is used to handle scenarios where source types can be mapped to multiple destination types
+    /// based on their runtime or compile-time polymorphism relationships.
+    public Dictionary<ITypeSymbol, List<ITypeSymbol>> PolymorphableTypes { get; }
+
+
+    /// Represents the namespace where the generated mapper code will be placed.
+    public string Namespace  { get;  }
+
+    /// A collection of namespaces that will be included as `using` directives in the generated mapper class.
+    public List<string> Usings { get;  }
+
+    public AttributeData[] Maps { get; }
+
+    /// A collection of attribute data representing additional mappers needed for nested or complex mapping scenarios.
+    public AttributeData[] OtherMappers { get; }
+
+    /// Represents a collection of mapping-related attributes associated with the current mapping process.
+    public AttributeData[] AllMaps { get; }
+
+    public List<(ITypeSymbol source, ITypeSymbol destination)> PossibleTypeMaps { get; }
+
+    /// A collection of methods that are defined by the user in the mapper class.
+    public IMethodSymbol[] UserDefinedMapperMethods { get;  }
+
+    /// A collection of methods that are executed before property assignments during the object mapping process.
     public MapMethodInfo[] PreMapMethods { get;  }
+
+    /// A collection of methods invoked after the mapping operation is complete.
     public MapMethodInfo[] PostMapMethods { get;  }
-    public MapMethodInfo[] MapToMethods   { get;  }
+
+    /// Represents a collection of user-defined mapping methods that are explicitly specified for mapping individual
+    /// members during the generation of mapping logic.
+    public MapMethodInfo[] ForMemberMethods { get;  }
 
     public string[] IgnoredMembers { get;  }
 
@@ -37,7 +72,19 @@ public sealed class MethodGenerationInfo
         SourceType      = (INamedTypeSymbol)sourceType;
         DestinationType = (INamedTypeSymbol)destinationType;
         Namespace       = MapperType.ContainingNamespace.ToDisplayString();
+        Maps            = MapperType.GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(MapAttribute<,>)).ToArray();
         OtherMappers    = MapperType.GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(UseMapAttribute<,,>)).ToArray();
+
+        AllMaps = Maps.Concat(OtherMappers.SelectMany(x => x.AttributeClass!.TypeArguments[0].GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(MapAttribute<,>)))).ToArray();
+
+        PossibleTypeMaps = new();
+
+        foreach (var attributeData in AllMaps)
+        {
+            PossibleTypeMaps.Add( new(attributeData.AttributeClass!.TypeArguments[0], attributeData.AttributeClass.TypeArguments[1]) );
+        }
+
+        PolymorphableTypes = InheritanceUtils.CreatePolymorphismMap(PossibleTypeMaps.Select(x => x.source).Concat(PossibleTypeMaps.Select(x => x.destination)));
 
         // Ive done this instead of parsing it through as an argument to to make things simpler when doing nested mapping
         var mapAttributeData = mapperType
@@ -48,9 +95,9 @@ public sealed class MethodGenerationInfo
                                           x.AttributeClass.TypeArguments[1].Equals(destinationType, SymbolEqualityComparer.Default)
                                );
 
-        MapperMethods = MapperType.GetMembers().OfType<IMethodSymbol>().ToArray();
+        UserDefinedMapperMethods = MapperType.GetMembers().OfType<IMethodSymbol>().ToArray();
 
-        PreMapMethods = MapperMethods
+        PreMapMethods = UserDefinedMapperMethods
                        .Select(method =>
                         {
                             var attributes = method.GetAttributes();
@@ -67,7 +114,7 @@ public sealed class MethodGenerationInfo
                        .Where(x => x.Method is not null) // Required check as above we suppress the null warning
                        .ToArray();
 
-        PostMapMethods = MapperMethods
+        PostMapMethods = UserDefinedMapperMethods
                             .Select(method =>
                              {
                                  var attributes = method.GetAttributes();
@@ -99,9 +146,9 @@ public sealed class MethodGenerationInfo
 
         SourceProperties = Utils.GetAllReadableProperties(sourceType).ToArray();
 
-        DestinationProperties = Utils.GetAllReadableProperties(DestinationType).ToDictionary(p => p.Name);
+        DestinationProperties = Utils.GetAllSetableProperties(DestinationType).ToDictionary(p => p.Name);
 
-        MapToMethods = MapperMethods
+        ForMemberMethods = UserDefinedMapperMethods
                                .Select(method =>
                                 {
                                     var attributes = method.GetAttributes();
@@ -147,7 +194,7 @@ public sealed class MethodGenerationInfo
                 continue;
             }
 
-            if (MapToMethods.Any(x =>
+            if (ForMemberMethods.Any(x =>
                 {
                     var attCtorArguments = x.Attribute.ConstructorArguments;
                     return attCtorArguments[0].Value!.Equals(destProp.Name);
@@ -200,7 +247,7 @@ public sealed class MethodGenerationInfo
             }
         }
 
-        foreach (var mapToMethod in MapToMethods)
+        foreach (var mapToMethod in ForMemberMethods)
         {
             if(!DestinationProperties.TryGetValue((string)mapToMethod.Attribute.ConstructorArguments[0].Value!, out var destProp))
                 continue;

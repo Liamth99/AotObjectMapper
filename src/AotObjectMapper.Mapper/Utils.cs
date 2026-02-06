@@ -54,6 +54,82 @@ public static class Utils
         return sb.ToString();
     }
 
+    public static string NoInstanceTypeMapSwitchStatement(string sourceObjectName, MethodGenerationInfo info)
+    {
+        if (!info.PolymorphableTypes.TryGetValue(info.SourceType, out var sourceTypes) || !sourceTypes.Any())
+            return string.Empty;
+
+        StringBuilder sb = new();
+
+        sb.Append($"{sourceObjectName} switch {{");
+
+        int i = 0;
+
+        foreach (var sourceType in sourceTypes)
+        {
+            foreach (var map in info.Maps)
+            {
+                if (map.AttributeClass!.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default))
+                {
+                    sb.Append($" {sourceType.ToDisplayString()} t{i} => Map(t{i}, context),");
+                    i++;
+                    break;
+                }
+            }
+
+            foreach (var mapper in info.OtherMappers)
+            {
+                if (mapper.AttributeClass!.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default))
+                {
+                    sb.Append($" {sourceType.ToDisplayString()} t{i} => {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, context),");
+                    i++;
+                    break;
+                }
+            }
+        }
+
+        sb.Append($"_ => throw new AotObjectMapper.Abstractions.Exceptions.UnhandledPolymorphicTypeException(\"Could not map type `{info.SourceType.ToDisplayString()}` - no matching destination type found.\")");
+
+        sb.Append(" }");
+
+        return sb.ToString();
+    }
+
+    public static string InstanceTypeMapSwitchStatement(string sourceObjectName, MethodGenerationInfo info)
+    {
+        if (!info.PolymorphableTypes.TryGetValue(info.SourceType, out var sourceTypes) || !sourceTypes.Any())
+            return string.Empty;
+
+        StringBuilder sb = new();
+
+        int i = 0;
+
+        foreach (var sourceType in sourceTypes)
+        {
+            foreach (var map in info.Maps)
+            {
+                if (map.AttributeClass!.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default))
+                {
+                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return Map(t{i}, context);");
+                    i++;
+                    break;
+                }
+            }
+
+            foreach (var mapper in info.OtherMappers)
+            {
+                if (mapper.AttributeClass!.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default))
+                {
+                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, context);");
+                    i++;
+                    break;
+                }
+            }
+        }
+
+        return sb.ToString();
+    }
+
     public static bool IsSimpleType(ITypeSymbol type)
     {
         // unwrap nullable

@@ -62,8 +62,11 @@ public class MapperGenerator : IIncrementalGenerator
 
                 var info = new MethodGenerationInfo((INamedTypeSymbol)mapper, sourceType, destinationType);
 
-                var populateCode = GeneratePopulationMethod(compilation, info);
-                context.AddSource($"Populate_{destinationType.Name}_From_{sourceType.Name}_{i++}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
+                if (info.DestinationType.TypeKind is not TypeKind.Interface || !info.DestinationType.IsAbstract)
+                {
+                    var populateCode = GeneratePopulationMethod(compilation, info);
+                    context.AddSource($"Populate_{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
+                }
 
                 var code = GenerateMapperMethod(compilation, info);
                 context.AddSource($"{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(code, Encoding.UTF8));
@@ -116,10 +119,15 @@ public class MapperGenerator : IIncrementalGenerator
 
         string mapMethod;
 
-        if (info.PreserveReferences)
+        if (info.DestinationType.TypeKind is TypeKind.Interface || info.DestinationType.IsAbstract)
+        {
+            mapMethod = $"            return {Utils.NoInstanceTypeMapSwitchStatement("source", info)};";
+        }
+        else if (info.PreserveReferences)
         {
             mapMethod =
                 $$"""
+                              {{Utils.InstanceTypeMapSwitchStatement("source", info)}}
                               context ??= new MapperContext();
                               
                               return context.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(source, context, static () => {{Utils.BlankTypeConstructor(info.DestinationType)}}, {{info.DestinationType.Name}}_Utils.Populate);
@@ -130,6 +138,7 @@ public class MapperGenerator : IIncrementalGenerator
         {
             mapMethod =
                 $$"""
+                              {{Utils.InstanceTypeMapSwitchStatement("source", info)}}
                               context ??= new MapperContext();
                   
                               // Pre Map Actions
