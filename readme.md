@@ -47,7 +47,8 @@ public partial class UserMapper;
 ```
 When the project is built, the mapper will generate a static `Map` method on `UserMapper` which will map Id, FirstName, MiddleName and LastName.
 
-The remaining members cannot be mapped automatically because they differ in type and/or name, or do not exist on one of the classes.
+The remaining members cannot be mapped automatically because they differ in type and/or name, or do not exist on one of the classes. This can
+be fixed using mapper configuration which is all covered in the documentation.
 
 Multiple Map attributes can be added to a single mapper class:
 ```csharp
