@@ -37,7 +37,7 @@ dotnet add package AotObjectMapper
 
 3. Install the latest version
 
-Both methods will automatically add `AotObjectMapper.Abstractions` and `AotObjectMapper.Analyzers`.
+Both methods will automatically add `AotObjectMapper.Abstractions`.
 
 # Quick Start
 ```csharp
