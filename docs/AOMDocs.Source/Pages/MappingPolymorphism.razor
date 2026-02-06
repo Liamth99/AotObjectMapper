@@ -1,0 +1,162 @@
+﻿
+@page "/MappingPolymorphism"
+
+<PageTitle>Mapping Polymorphism</PageTitle>
+
+<h1>Polymorphic Mapping</h1>
+
+<p>
+    Polymorphic mapping enables you to map interface or base class types to their runtime implementations automatically.
+</p>
+
+<h2>Overview</h2>
+
+<p>
+    When you map an interface or base class reference, the mapper examines the actual runtime type and routes it to the correct mapping.
+    This is particularly useful when working with inheritance hierarchies or polymorphic collections.
+</p>
+
+<h2>Example Configuration:</h2>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@MapperCode />
+
+<h2>Core Concepts</h2>
+
+<h3>Type Dispatch</h3>
+
+<p>
+    The mapper automatically detects the actual runtime type of your source object and dispatches it to the appropriate handler:
+</p>
+
+<ul>
+    <li>A <code>Dog</code> instance referenced as <code>IAnimal</code> is automatically mapped to <code>DogDto</code></li>
+    <li>A <code>Cat</code> instance referenced as <code>IAnimal</code> is automatically mapped to <code>CatDto</code></li>
+    <li>The dispatch happens transparently at runtime through pattern matching</li>
+</ul>
+
+<h2>Runtime Behavior</h2>
+
+<h3>Successful Dispatch</h3>
+
+<p>
+    When mapping an interface or base class reference:
+</p>
+
+<ol>
+    <li>The mapper checks the actual runtime type of the source object</li>
+    <li>Finds the corresponding mapping in its registry</li>
+    <li>Calls the appropriate <code>Map()</code> method</li>
+    <li>Returns the correctly typed result</li>
+</ol>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@DispatchExample />
+
+<h3>Inheritance Chain Handling</h3>
+
+<p>
+    When mapping a derived type through a base class reference:
+</p>
+
+<ol>
+    <li>The mapper first checks for an exact type match</li>
+    <li>If found, it uses a specialized mapper (via <code>[UseMap&lt;&gt;]</code>)</li>
+    <li>The specialized mapper handles all derived-type-specific properties</li>
+</ol>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@InheritanceExample />
+
+<h3>Unhandled Types</h3>
+
+<p>
+    If the mapper encounters a type without a registered mapping, it throws an <code>UnhandledPolymorphicTypeException</code>:
+</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@UnhandledTypeExample />
+
+<p>
+    <strong>Mitigation:</strong> Register all types that might be encountered:
+</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@MitigationExample />
+
+<h2>Best Practices</h2>
+
+<ul>
+    <li><strong>Register all possible types</strong> that might be encountered during mapping</li>
+    <li><strong>Use <code>[UseMap&lt;&gt;]</code></strong> for inheritance hierarchies with specialized behavior</li>
+    <li><strong>Keep interfaces aligned</strong> between source and destination types</li>
+    <li><strong>Test polymorphic paths</strong> to ensure all derived types are covered</li>
+    <li><strong>Handle exceptions gracefully</strong> if unhandled types are possible</li>
+</ul>
+
+@code {
+
+    public const string MapperCode =
+    """
+    public interface IAnimal    { public string Name { get; set; } }
+    public interface IAnimalDto { public string Name { get; set; } }
+
+    public class Dog    : IAnimal    { public string Name { get; set; } }
+    public class DogDto : IAnimalDto { public string Name { get; set; } }
+
+    public class Cat    : IAnimal    { public string Name { get; set; } }
+    public class CatDto : IAnimalDto { public string Name { get; set; } }
+
+    public class Bird    : IAnimal    { public string Name { get; set; } }
+    public class BirdDto : IAnimalDto { public string Name { get; set; } }
+
+    public class Wolf    : Dog    { public Color FurColor { get; set; } }
+    public class WolfDto : DogDto { public Color FurColor { get; set; } }
+
+    [GenerateMapper]
+    [Map<IAnimal, IAnimalDto>]
+    [Map<Dog, DogDto>]
+    [Map<Cat, CatDto>]
+    [UseMap<WolfMapper, Wolf, WolfDto>]
+    public partial class AnimalMapper;
+
+    [GenerateMapper(options: /* Adv. mapping configuration */)]
+    [Map<Wolf, WolfDto>]
+    public partial class WolfMapper
+    {
+        // Adv. mapping configuration
+    }
+    """;
+
+    public const string DispatchExample =
+    """
+    IAnimal source = new Dog { Name = "Piper" };
+    IAnimalDto result = AnimalMapper.Map(source);  // Returns DogDto with Name = "Piper"
+    """;
+
+    public const string InheritanceExample =
+    """
+    IAnimal source = new Wolf { Name = "Ghost", FurColor = Color.GhostWhite };
+    IAnimalDto result = AnimalMapper.Map(source);  // Uses WolfMapper.Map(source)
+
+    // Result is WolfDto with both Name and FurColor populated
+    var wolf = result as WolfDto;
+    Console.WriteLine(wolf.Name);      // "Ghost"
+    Console.WriteLine(wolf.FurColor);  // Color.GhostWhite
+    """;
+
+    public const string UnhandledTypeExample =
+    """
+    IAnimal source = new Bird { Name = "Iago" };
+    AnimalMapper.Map(source);  // Throws UnhandledPolymorphicTypeException!
+
+    // Message: "Could not map type `Bird` to `IAnimalDto` - no matching destination type found."
+    """;
+
+    public const string MitigationExample =
+    """
+    [GenerateMapper]
+    [Map<IAnimal, IAnimalDto>]
+    [Map<Dog, DogDto>]
+    [Map<Cat, CatDto>]
+    [Map<Bird, BirdDto>]  // Register the Bird type
+    [UseMap<WolfMapper, Wolf, WolfDto>]
+    public partial class AnimalMapper;
+    """;
+
+}
