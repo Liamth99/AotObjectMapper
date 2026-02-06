@@ -63,10 +63,10 @@ public class MapperGenerator : IIncrementalGenerator
                 var info = new MethodGenerationInfo((INamedTypeSymbol)mapper, sourceType, destinationType);
 
                 var populateCode = GeneratePopulationMethod(compilation, info);
-                context.AddSource($"Populate_{destinationType.Name}_{(string)mapAttr.ConstructorArguments[0].Value!}_From_{sourceType.Name}_{i++}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
+                context.AddSource($"Populate_{destinationType.Name}_From_{sourceType.Name}_{i++}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
 
                 var code = GenerateMapperMethod(compilation, info);
-                context.AddSource($"{mapper.Name}_{(string)mapAttr.ConstructorArguments[0].Value!}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(code, Encoding.UTF8));
+                context.AddSource($"{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(code, Encoding.UTF8));
             }
         }
     }
@@ -88,7 +88,7 @@ public class MapperGenerator : IIncrementalGenerator
         sb.AppendLine($"{{");
         sb.AppendLine($"    public partial class {info.MapperType.Name}");
         sb.AppendLine($"    {{");
-        sb.AppendLine($"        public static partial class {info.DestinationType.Name}_{info.MethodName}Utils");
+        sb.AppendLine($"        public static partial class {info.DestinationType.Name}_Utils");
         sb.AppendLine($"        {{");
         sb.AppendLine($"            /// Populates an existing object, Designed for internal use.");
         sb.AppendLine($"            [EditorBrowsable(EditorBrowsableState.Never)] // Does not work with ReSharper.");
@@ -122,7 +122,7 @@ public class MapperGenerator : IIncrementalGenerator
                 $$"""
                               context ??= new MapperContext();
                               
-                              return context.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(source, context, static () => {{Utils.BlankTypeConstructor(info.DestinationType)}}, {{info.DestinationType.Name}}_{{info.MethodName}}Utils.Populate);
+                              return context.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(source, context, static () => {{Utils.BlankTypeConstructor(info.DestinationType)}}, {{info.DestinationType.Name}}_Utils.Populate);
                   """;
 
         }
@@ -160,7 +160,7 @@ public class MapperGenerator : IIncrementalGenerator
                      public partial class {{info.MapperType.Name}} : IMapper<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>
                      {
                  {{GenerateMethodDocs(info)}}        [Pure]
-                         public static {{info.DestinationType.Name}} {{info.MethodName}}({{info.SourceType.Name}} source, MapperContext? context = null)
+                         public static {{info.DestinationType.Name}} Map({{info.SourceType.Name}} source, MapperContext? context = null)
                          {
                  {{mapMethod}}
                          }

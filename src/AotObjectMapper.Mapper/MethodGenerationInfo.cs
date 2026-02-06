@@ -14,7 +14,6 @@ public sealed class MethodGenerationInfo
     public Dictionary<string,IPropertySymbol> DestinationProperties { get;  }
 
     public string       Namespace  { get;  }
-    public string       MethodName { get;  }
     public List<string> Usings     { get;  }
 
     public AttributeData[] OtherMappers   { get;  }
@@ -50,7 +49,6 @@ public sealed class MethodGenerationInfo
                                );
 
         MapperMethods = MapperType.GetMembers().OfType<IMethodSymbol>().ToArray();
-        MethodName = (string)mapAttributeData.ConstructorArguments[0].Value!;
 
         PreMapMethods = MapperMethods
                        .Select(method =>
@@ -88,7 +86,7 @@ public sealed class MethodGenerationInfo
 
         int mappingOptions = Convert.ToInt32(MapperType.GetAttributes().Single(x => x.AttributeClass!.Name == nameof(GenerateMapperAttribute)).ConstructorArguments[0].Value);
 
-        IgnoredMembers               = mapAttributeData.ConstructorArguments[1].Values.Select(x => x.Value).OfType<string>().ToArray();
+        IgnoredMembers               = mapAttributeData.ConstructorArguments[0].Values.Select(x => x.Value).OfType<string>().ToArray();
         AllowIConvertable            = (mappingOptions & 1U)  > 0;
         SuppressNullWarnings         = (mappingOptions & 2U)  > 0;
         PreserveReferences           = (mappingOptions & 4U)  > 0;
@@ -147,10 +145,10 @@ public sealed class MethodGenerationInfo
             {
                 if (PreserveReferences)
                 {
-                    assignments.Add(new(destProp, $"context.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>(source.{srcProp.Name}, context, static () => {Utils.BlankTypeConstructor(otherMapper.AttributeClass!.TypeArguments[2])}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_{MethodName}Utils.Populate)"));
+                    assignments.Add(new(destProp, $"context.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>(source.{srcProp.Name}, context, static () => {Utils.BlankTypeConstructor(otherMapper.AttributeClass!.TypeArguments[2])}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)"));
                 }
                 else
-                    assignments.Add(new(destProp, $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.{otherMapper.ConstructorArguments[0].Value}(source.{srcProp.Name}, context)"));
+                    assignments.Add(new(destProp, $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(source.{srcProp.Name}, context)"));
 
                 continue;
             }
@@ -158,7 +156,7 @@ public sealed class MethodGenerationInfo
             if (MapToMethods.Any(x =>
                 {
                     var attCtorArguments = x.Attribute.ConstructorArguments;
-                    return (attCtorArguments.Length is 2 && attCtorArguments[0].Value!.Equals(MethodName) && attCtorArguments[1].Value!.Equals(destProp.Name)) || (attCtorArguments.Length is 1 && attCtorArguments[0].Value!.Equals(destProp.Name));
+                    return attCtorArguments[0].Value!.Equals(destProp.Name);
                 }))
                 continue; // Dont want to double map properties with explicit Map to methods
 
@@ -210,20 +208,10 @@ public sealed class MethodGenerationInfo
 
         foreach (var mapToMethod in MapToMethods)
         {
-            if(mapToMethod.Attribute.ConstructorArguments.Length is 1)
-            {
-                if(!DestinationProperties.TryGetValue((string)mapToMethod.Attribute.ConstructorArguments[0].Value!, out var destProp))
-                    continue;
+            if(!DestinationProperties.TryGetValue((string)mapToMethod.Attribute.ConstructorArguments[0].Value!, out var destProp))
+                continue;
 
-                assignments.Add(new (destProp, $"{mapToMethod.Method.Name}(source{(mapToMethod.Method.Parameters.Length is 2 ? ", context" : "")})"));
-            }
-            else if (mapToMethod.Attribute.ConstructorArguments[0].Value!.Equals(MethodName))
-            {
-                if(!DestinationProperties.TryGetValue((string)mapToMethod.Attribute.ConstructorArguments[1].Value!, out var destProp))
-                    continue;
-
-                assignments.Add(new (destProp, $"{mapToMethod.Method.Name}(source{(mapToMethod.Method.Parameters.Length is 2 ? ", context" : "")})"));
-            }
+            assignments.Add(new (destProp, $"{mapToMethod.Method.Name}(source{(mapToMethod.Method.Parameters.Length is 2 ? ", context" : "")})"));
         }
 
         if (SuppressNullWarnings)

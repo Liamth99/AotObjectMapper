@@ -20,12 +20,12 @@ public partial class CompanyMapper;
 // Layer 2: Department Mapper
 [GenerateMapper]
 [Map<DepartmentEntity, DepartmentDto>]
-[UseMap<EmployeeMapper, EmployeeEntity, EmployeeDto>("MapEmployee")]
+[UseMap<EmployeeMapper, EmployeeEntity, EmployeeDto>]
 public partial class DepartmentMapper;
 
 // Layer 3: Employee Mapper
 [GenerateMapper]
-[Map<EmployeeEntity, EmployeeDto>("MapEmployee")]
+[Map<EmployeeEntity, EmployeeDto>]
 public partial class EmployeeMapper;
 """;
 }

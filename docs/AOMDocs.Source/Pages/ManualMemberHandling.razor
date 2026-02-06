@@ -2,7 +2,7 @@
 
 <PageTitle>Manual Member Handling</PageTitle>
 
-<p>To map between members that differ (such as the date-of-birth fields), use ForMember&lt;TSource, TDestination&gt; to specify custom conversion methods. mapMethodName defaults to Map.</p>
+<p>To map between members that differ (such as the date-of-birth fields), use ForMember&lt;TSource, TDestination&gt; to specify custom conversion methods.</p>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
@@ -14,7 +14,7 @@
 """
 [GenerateMapper(options: MappingOptions.SuppressNullWarnings)]
 [Map<User, UserDto>]
-[Map<UserDto, User>(methodName: "RevertMap")]
+[Map<UserDto, User>]
 public partial class UserMapper
 {
     [ForMember<User, UserDto>(nameof(UserDto.DayOfBirth))]
