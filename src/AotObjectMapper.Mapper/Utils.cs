@@ -88,7 +88,7 @@ public static class Utils
             }
         }
 
-        sb.Append($"_ => throw new AotObjectMapper.Abstractions.Exceptions.UnhandledPolymorphicTypeException(\"Could not map type `{info.SourceType.ToDisplayString()}` - no matching destination type found.\")");
+        sb.Append($"_ => throw new AotObjectMapper.Abstractions.Exceptions.UnhandledPolymorphicTypeException($\"Could not map type `{{{sourceObjectName}.GetType().FullName}}` to `{info.DestinationType.ToDisplayString()}` - no matching destination type found.\")");
 
         sb.Append(" }");
 

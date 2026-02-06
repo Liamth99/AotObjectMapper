@@ -242,8 +242,7 @@ public sealed class MethodGenerationInfo
             }
             else
             {
-                if (Utils.IsSimpleType(destProp.Type))
-                    assignments.Add(new(destProp, $"source.{srcProp.Name}{(srcProp.NullableAnnotation == NullableAnnotation.Annotated && SuppressNullWarnings ? " ?? default!" : "")}"));
+                assignments.Add(new(destProp, $"source.{srcProp.Name}{(srcProp.NullableAnnotation == NullableAnnotation.Annotated && SuppressNullWarnings ? " ?? default!" : "")}"));
             }
         }
 
