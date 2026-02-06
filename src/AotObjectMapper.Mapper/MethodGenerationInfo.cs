@@ -96,16 +96,10 @@ public sealed class MethodGenerationInfo
         var format = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
 
         Usings = ["System", "System.ComponentModel", "System.Diagnostics.Contracts", "AotObjectMapper.Abstractions.Models", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
-        
-        SourceProperties = SourceType.GetMembers()
-                              .OfType<IPropertySymbol>()
-                              .Where(p => p.GetMethod is not null)
-                              .ToArray();
 
-        DestinationProperties = DestinationType.GetMembers()
-                            .OfType<IPropertySymbol>()
-                            .Where(p => p.SetMethod is not null)
-                            .ToDictionary(p => p.Name);
+        SourceProperties = Utils.GetAllReadableProperties(sourceType).ToArray();
+
+        DestinationProperties = Utils.GetAllReadableProperties(DestinationType).ToDictionary(p => p.Name);
 
         MapToMethods = MapperMethods
                                .Select(method =>

@@ -175,4 +175,42 @@ public static class Utils
 
         return defaultProviderPropertyName;
     }
+
+    public static IEnumerable<IPropertySymbol> GetAllReadableProperties(ITypeSymbol type)
+    {
+        var seen = new HashSet<IPropertySymbol>(SymbolEqualityComparer.Default);
+
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
+            {
+                if (property.GetMethod is null)
+                    continue;
+
+                if (!seen.Add(property))
+                    continue;
+
+                yield return property;
+            }
+        }
+    }
+
+    public static IEnumerable<IPropertySymbol> GetAllSetableProperties(ITypeSymbol type)
+    {
+        var seen = new HashSet<IPropertySymbol>(SymbolEqualityComparer.Default);
+
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
+            {
+                if (property.SetMethod is null)
+                    continue;
+
+                if (!seen.Add(property))
+                    continue;
+
+                yield return property;
+            }
+        }
+    }
 }
