@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 
-namespace AotObjectMapper.Mapper;
+namespace AotObjectMapper.Mapper.Utils;
 
-public static class Utils
+public static class GeneratorUtils
 {
     public static readonly ReadOnlyDictionary<SpecialType, string> ConvertMethods =
         new(new Dictionary<SpecialType, string>
@@ -27,9 +27,6 @@ public static class Utils
             [SpecialType.System_String]   = "ToString",
             [SpecialType.System_DateTime] = "ToDateTime"
         });
-
-    public static string BlankTypeConstructor(ITypeSymbol type)
-        => $"new {type.ToDisplayString()}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
 
     public static string EnumMapSwitchStatement(string sourceObjectName, ITypeSymbol source, ITypeSymbol destination, bool throwIfInvalid)
     {
@@ -71,7 +68,7 @@ public static class Utils
             {
                 if (map.AttributeClass!.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.Append($" {sourceType.ToDisplayString()} t{i} => Map(t{i}, context),");
+                    sb.Append($" {sourceType.ToDisplayString()} t{i} => Map(t{i}, ctx),");
                     i++;
                     break;
                 }
@@ -81,7 +78,7 @@ public static class Utils
             {
                 if (mapper.AttributeClass!.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.Append($" {sourceType.ToDisplayString()} t{i} => {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, context),");
+                    sb.Append($" {sourceType.ToDisplayString()} t{i} => {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, ctx),");
                     i++;
                     break;
                 }
@@ -95,10 +92,13 @@ public static class Utils
         return sb.ToString();
     }
 
-    public static string InstanceTypeMapSwitchStatement(string sourceObjectName, MethodGenerationInfo info)
+    public static bool InstanceTypeMapSwitchStatement(string sourceObjectName, MethodGenerationInfo info, out string statement)
     {
         if (!info.PolymorphableTypes.TryGetValue(info.SourceType, out var sourceTypes) || !sourceTypes.Any())
-            return string.Empty;
+        {
+            statement = null!;
+            return false;
+        }
 
         StringBuilder sb = new();
 
@@ -110,7 +110,7 @@ public static class Utils
             {
                 if (map.AttributeClass!.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return Map(t{i}, context);");
+                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return Map(t{i}, ctx);");
                     i++;
                     break;
                 }
@@ -120,75 +120,16 @@ public static class Utils
             {
                 if (mapper.AttributeClass!.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, context);");
+                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, ctx);");
                     i++;
                     break;
                 }
             }
         }
 
-        return sb.ToString();
-    }
 
-    public static bool IsSimpleType(ITypeSymbol type)
-    {
-        // unwrap nullable
-        if (type is INamedTypeSymbol named &&
-            named.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T)
-        {
-            type = named.TypeArguments[0];
-        }
-
-        if (type.TypeKind == TypeKind.Enum)
-            return true;
-
-        if (type.SpecialType is
-            SpecialType.System_Boolean or
-            SpecialType.System_Byte or SpecialType.System_SByte or
-            SpecialType.System_Int16 or SpecialType.System_UInt16 or
-            SpecialType.System_Int32 or SpecialType.System_UInt32 or
-            SpecialType.System_Int64 or SpecialType.System_UInt64 or
-            SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_Decimal or
-            SpecialType.System_Char or SpecialType.System_String or SpecialType.System_DateTime)
-            return true;
-
-        if (type is INamedTypeSymbol nts && nts.ContainingNamespace.ToDisplayString() == "System")
-        {
-            if (nts.Name is "Guid" or "DateOnly" or "TimeOnly" or "DateTimeOffset" or "TimeSpan")
-                return true;
-        }
-
-        return false;
-    }
-
-    public static bool TryGetConvertibleInfo(ITypeSymbol type, Compilation compilation, out bool canBeNull, out ITypeSymbol? underlyingType)
-    {
-        canBeNull      = false;
-        underlyingType = null;
-
-        var iConvertible = compilation.GetTypeByMetadataName("System.IConvertible");
-
-        if (iConvertible is null)
-            return false;
-
-        // Nullable<T>
-        if (type is INamedTypeSymbol named && named.OriginalDefinition.SpecialType is SpecialType.System_Nullable_T)
-        {
-            underlyingType = named.TypeArguments[0];
-            canBeNull      = true;
-            return underlyingType.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, iConvertible));
-        }
-
-        // Nullable reference type (T?)
-        if (type.IsReferenceType)
-        {
-            canBeNull = type.NullableAnnotation == NullableAnnotation.Annotated;
-
-            return type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, iConvertible));
-        }
-
-        // Non-nullable value type
-        return type.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, iConvertible));
+        statement = sb.ToString();
+        return true;
     }
 
     public static string? GetFormatProviderExpression(INamedTypeSymbol mapper, Compilation compilation, INamedTypeSymbol sourceType, INamedTypeSymbol destinationType)
@@ -250,43 +191,5 @@ public static class Utils
         }
 
         return defaultProviderPropertyName;
-    }
-
-    public static IEnumerable<IPropertySymbol> GetAllReadableProperties(ITypeSymbol type)
-    {
-        var seen = new HashSet<IPropertySymbol>(SymbolEqualityComparer.Default);
-
-        for (var current = type; current is not null; current = current.BaseType)
-        {
-            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
-            {
-                if (property.GetMethod is null)
-                    continue;
-
-                if (!seen.Add(property))
-                    continue;
-
-                yield return property;
-            }
-        }
-    }
-
-    public static IEnumerable<IPropertySymbol> GetAllSetableProperties(ITypeSymbol type)
-    {
-        var seen = new HashSet<IPropertySymbol>(SymbolEqualityComparer.Default);
-
-        for (var current = type; current is not null; current = current.BaseType)
-        {
-            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
-            {
-                if (property.SetMethod is null)
-                    continue;
-
-                if (!seen.Add(property))
-                    continue;
-
-                yield return property;
-            }
-        }
     }
 }

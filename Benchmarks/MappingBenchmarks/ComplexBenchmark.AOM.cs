@@ -33,7 +33,7 @@ public partial class AotObjectMapperCompanyMapper
     public static DateTime GetFoundedAt(Company source) => source.Metadata.FoundedAt;
 
     [ForMember<Company, CompanyDto>(nameof(CompanyDto.AnnualRevenue))]
-    public static decimal GetFAnnualRevenue(Company source) => source.Metadata.AnnualRevenue;
+    public static decimal GetAnnualRevenue(Company source) => source.Metadata.AnnualRevenue;
 }
 
 public partial class ComplexBenchmark

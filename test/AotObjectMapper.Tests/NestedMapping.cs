@@ -58,8 +58,8 @@ public class NestedMapping
 
         var order = Order.Order1();
 
-        var dto  = OrderMapper.Map(order, context: context);
-        var dto2 = OrderMapper.Map(new Order() { Id = 5, Customer = order.Customer, Total = 20}, context: context);
+        var dto  = OrderMapper.Map(order,                                                        ctx: context);
+        var dto2 = OrderMapper.Map(new Order() { Id = 5, Customer = order.Customer, Total = 20}, ctx: context);
 
         ReferenceEquals(dto.Customer, dto2.Customer).ShouldBeTrue();
     }
@@ -71,8 +71,8 @@ public class NestedMapping
 
         var order = Order.Order1();
 
-        var dto  = OrderMapperNoRefPreservation.Map(order, context: context);
-        var dto2 = OrderMapperNoRefPreservation.Map(new Order() { Id = 5, Customer = order.Customer, Total = 20}, context: context);
+        var dto  = OrderMapperNoRefPreservation.Map(order, ctx: context);
+        var dto2 = OrderMapperNoRefPreservation.Map(new Order() { Id = 5, Customer = order.Customer, Total = 20}, ctx: context);
 
         ReferenceEquals(dto.Customer, dto2.Customer).ShouldBeFalse();
     }

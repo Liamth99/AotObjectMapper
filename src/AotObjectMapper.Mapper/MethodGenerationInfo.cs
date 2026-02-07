@@ -144,9 +144,9 @@ public sealed class MethodGenerationInfo
 
         Usings = ["System", "System.ComponentModel", "System.Diagnostics.Contracts", "AotObjectMapper.Abstractions.Models", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
 
-        SourceProperties = Utils.GetAllReadableProperties(sourceType).ToArray();
+        SourceProperties = sourceType.GetAllReadableProperties().ToArray();
 
-        DestinationProperties = Utils.GetAllSetableProperties(DestinationType).ToDictionary(p => p.Name);
+        DestinationProperties = DestinationType.GetAllReadableProperties().ToDictionary(p => p.Name);
 
         ForMemberMethods = UserDefinedMapperMethods
                                .Select(method =>
@@ -178,72 +178,8 @@ public sealed class MethodGenerationInfo
             if (IgnoredMembers.Any(x => x.Equals(destProp.Name)))
                 continue;
 
-            var otherMapper = OtherMappers.FirstOrDefault(
-                attr => attr.AttributeClass?.TypeArguments[1].Equals(srcProp.Type, SymbolEqualityComparer.Default) is true &&
-                        attr.AttributeClass.TypeArguments[2].Equals(destProp.Type, SymbolEqualityComparer.Default));
-
-            if (otherMapper is not null)
-            {
-                if (PreserveReferences)
-                {
-                    assignments.Add(new(destProp, $"context.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>(source.{srcProp.Name}, context, static () => {Utils.BlankTypeConstructor(otherMapper.AttributeClass!.TypeArguments[2])}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)"));
-                }
-                else
-                    assignments.Add(new(destProp, $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(source.{srcProp.Name}, context)"));
-
-                continue;
-            }
-
-            if (ForMemberMethods.Any(x =>
-                {
-                    var attCtorArguments = x.Attribute.ConstructorArguments;
-                    return attCtorArguments[0].Value!.Equals(destProp.Name);
-                }))
-                continue; // Dont want to double map properties with explicit Map to methods
-
-            if (!SymbolEqualityComparer.Default.Equals(srcProp.Type, destProp.Type))
-            {
-                if (srcProp.Type.TypeKind is TypeKind.Enum && destProp.Type.TypeKind is TypeKind.Enum)
-                {
-                    if (MapEnumsByValue)
-                        assignments.Add(new(destProp, $"({destProp.Type.ToDisplayString()})source.{srcProp.Name}"));
-                    else
-                        assignments.Add(new(destProp, $"{Utils.EnumMapSwitchStatement($"source.{destProp.Name}", srcProp.Type, destProp.Type, ThrowExceptionOnUnmappedEnum)}"));
-
-                    continue;
-                }
-
-                if (!AllowIConvertable)
-                    continue;
-
-                if (!Utils.TryGetConvertibleInfo(destProp.Type, compilation, out var destCanBeNull, out var destUnderlyingType))
-                    continue;
-
-                if (!Utils.ConvertMethods.TryGetValue(destUnderlyingType?.SpecialType ?? destProp.Type.SpecialType, out var method))
-                    continue;
-
-                if (Utils.TryGetConvertibleInfo(srcProp.Type, compilation, out var canBeNull, out _))
-                {
-                    var formatProviderExpr = Utils.GetFormatProviderExpression(MapperType, compilation, (srcProp.Type as INamedTypeSymbol)!, (destProp.Type as INamedTypeSymbol)!);
-                    var convertArgsSuffix  = formatProviderExpr is null ? "" : $", {formatProviderExpr}";
-
-                    if (canBeNull && SuppressNullWarnings)
-                    {
-                        if (destCanBeNull)
-                            assignments.Add(new(destProp, $"source.{srcProp.Name} is null ? null : Convert.{method}(source.{srcProp.Name}{convertArgsSuffix})"));
-                        else
-                            assignments.Add(new(destProp, $"source.{srcProp.Name} is null ? default! : Convert.{method}(source.{srcProp.Name}{convertArgsSuffix})"));
-                    }
-                    else
-                        assignments.Add(new(destProp, $"Convert.{method}(source.{srcProp.Name}{convertArgsSuffix})"));
-                }
-                else
-                    continue;
-            }
-            else
-            {
-                assignments.Add(new(destProp, $"source.{srcProp.Name}{(srcProp.NullableAnnotation == NullableAnnotation.Annotated && SuppressNullWarnings ? " ?? default!" : "")}"));
-            }
+            if(TryBuildAssignmentExpression(srcProp.Type ,destProp.Type, $"src.{srcProp.Name}", srcProp.NullableAnnotation is not NullableAnnotation.None, compilation, out var expression))
+                assignments.Add(new (destProp, expression));
         }
 
         foreach (var mapToMethod in ForMemberMethods)
@@ -251,7 +187,7 @@ public sealed class MethodGenerationInfo
             if(!DestinationProperties.TryGetValue((string)mapToMethod.Attribute.ConstructorArguments[0].Value!, out var destProp))
                 continue;
 
-            assignments.Add(new (destProp, $"{mapToMethod.Method.Name}(source{(mapToMethod.Method.Parameters.Length is 2 ? ", context" : "")})"));
+            assignments.Add(new (destProp, $"{mapToMethod.Method.Name}(src{(mapToMethod.Method.Parameters.Length is 2 ? ", ctx" : "")})"));
         }
 
         if (SuppressNullWarnings)
@@ -269,6 +205,68 @@ public sealed class MethodGenerationInfo
         }
 
         return assignments;
+    }
+
+    private bool TryBuildAssignmentExpression(ITypeSymbol sourceType, ITypeSymbol destinationType, string sourceExpression, bool sourceIsNullable, Compilation compilation, out string assignmentExpression)
+    {
+        // exact type match
+        if (sourceType.Equals(destinationType, SymbolEqualityComparer.Default))
+        {
+            assignmentExpression = $"{sourceExpression}{(sourceIsNullable && SuppressNullWarnings ? " ?? default!" : "")}";
+
+            return true;
+        }
+
+        // Try use other mapper
+        var otherMapper = OtherMappers.FirstOrDefault(
+            attr => attr.AttributeClass?.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default) is true &&
+                    attr.AttributeClass.TypeArguments[2].Equals(destinationType, SymbolEqualityComparer.Default));
+
+        if (otherMapper is not null)
+        {
+            if (PreserveReferences)
+                assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static () => {otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor()}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)";
+            else
+                assignmentExpression = $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map({sourceExpression}, ctx)";
+
+            return true;
+        }
+
+        // Enum -> Enum
+        if (sourceType.TypeKind is TypeKind.Enum && destinationType.TypeKind is TypeKind.Enum)
+        {
+            if (MapEnumsByValue)
+                assignmentExpression = $"({destinationType.ToDisplayString()}){sourceExpression}";
+            else
+                assignmentExpression = $"{GeneratorUtils.EnumMapSwitchStatement(sourceExpression, sourceType, destinationType, ThrowExceptionOnUnmappedEnum)}";
+
+            return true;
+        }
+
+        // IConvertable
+        if (AllowIConvertable &&
+            InheritanceUtils.TryGetConvertibleInfo(destinationType, compilation, out var destCanBeNull, out var destUnderlyingType) &&
+            GeneratorUtils.ConvertMethods.TryGetValue(destUnderlyingType?.SpecialType ?? destinationType.SpecialType, out var method) &&
+            InheritanceUtils.TryGetConvertibleInfo(sourceType, compilation, out var canBeNull, out _))
+        {
+            var formatProviderExpr = GeneratorUtils.GetFormatProviderExpression(MapperType, compilation, (INamedTypeSymbol)sourceType, (INamedTypeSymbol)destinationType);
+            var convertArgsSuffix  = formatProviderExpr is null ? "" : $", {formatProviderExpr}";
+
+            if (canBeNull && SuppressNullWarnings)
+            {
+                if (destCanBeNull)
+                    assignmentExpression = $"{sourceExpression} is null ? null : Convert.{method}({sourceExpression}{convertArgsSuffix})";
+                else
+                    assignmentExpression = $"{sourceExpression} is null ? default! : Convert.{method}({sourceExpression}{convertArgsSuffix})";
+            }
+            else
+                assignmentExpression = $"Convert.{method}({sourceExpression}{convertArgsSuffix})";
+
+            return true;
+        }
+
+        assignmentExpression = null!;
+        return false;
     }
 }
 
