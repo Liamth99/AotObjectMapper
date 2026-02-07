@@ -41,6 +41,28 @@ Both methods will automatically add `AotObjectMapper.Abstractions`.
 
 # Quick Start
 ```csharp
+class User
+{
+    public required Guid           Id          { get; set; }
+    public required string         FirstName   { get; set; }
+    public          string?        MiddleName  { get; set; }
+    public required string         LastName    { get; set; }
+    public required DateTimeOffset DateOfBirth { get; set; }
+    public required string         Secret      { get; set; }
+}
+
+public class UserDto
+{
+    public Guid     Id           { get; set; }
+    public string   FirstName    { get; set; } = String.Empty;
+    public string?  MiddleName   { get; set; }
+    public string   LastName     { get; set; } = String.Empty;
+    public int      DayOfBirth   { get; set; }
+    public int      MonthOfBirth { get; set; }
+    public int      YearOfBirth  { get; set; }
+    public TimeOnly TimeOfBirth  { get; set; }
+}
+
 [GenerateMapper]
 [Map<User, UserDto>]
 public partial class UserMapper;
