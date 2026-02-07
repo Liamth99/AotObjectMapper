@@ -92,10 +92,13 @@ public static class GeneratorUtils
         return sb.ToString();
     }
 
-    public static string InstanceTypeMapSwitchStatement(string sourceObjectName, MethodGenerationInfo info)
+    public static bool InstanceTypeMapSwitchStatement(string sourceObjectName, MethodGenerationInfo info, out string statement)
     {
         if (!info.PolymorphableTypes.TryGetValue(info.SourceType, out var sourceTypes) || !sourceTypes.Any())
-            return string.Empty;
+        {
+            statement = null!;
+            return false;
+        }
 
         StringBuilder sb = new();
 
@@ -124,7 +127,9 @@ public static class GeneratorUtils
             }
         }
 
-        return sb.ToString();
+
+        statement = sb.ToString();
+        return true;
     }
 
     public static string? GetFormatProviderExpression(INamedTypeSymbol mapper, Compilation compilation, INamedTypeSymbol sourceType, INamedTypeSymbol destinationType)

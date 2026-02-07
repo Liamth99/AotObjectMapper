@@ -45,7 +45,6 @@ public class MapperGenerator : IIncrementalGenerator
 
     private static void Execute(Compilation compilation, ImmutableArray<INamedTypeSymbol?> mappers, SourceProductionContext context)
     {
-        int i = 0;
         foreach (var mapper in mappers.Distinct(SymbolEqualityComparer.Default))
         {
             if (mapper is null)
@@ -118,44 +117,58 @@ public class MapperGenerator : IIncrementalGenerator
     {
         var propertyAssignments = info.GeneratePropertyAssignments(compilation).ToArray();
 
-        string mapMethod;
+        StringBuilder mapMethodSb = new();
 
         if (info.DestinationType.TypeKind is TypeKind.Interface || info.DestinationType.IsAbstract)
         {
-            mapMethod = $"            return {GeneratorUtils.NoInstanceTypeMapSwitchStatement("src", info)};";
+            mapMethodSb.AppendLine($"            return {GeneratorUtils.NoInstanceTypeMapSwitchStatement("src", info)};");
         }
         else if (info.PreserveReferences)
         {
-            mapMethod =
-                $$"""
-                              {{GeneratorUtils.InstanceTypeMapSwitchStatement("src", info)}}
-                              ctx ??= new MapperContext();
-                              
-                              return ctx.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(src, ctx, static () => {{info.DestinationType.BlankTypeConstructor()}}, {{info.DestinationType.Name}}_Utils.Populate);
-                  """;
-
+            if(GeneratorUtils.InstanceTypeMapSwitchStatement("src", info, out var statement))
+                mapMethodSb.AppendLine($"            {statement}");
+            mapMethodSb.AppendLine($"            ctx ??= new MapperContext();");
+            mapMethodSb.AppendLine($"            return ctx.GetOrMapObject<{info.SourceType.Name}, {info.DestinationType.Name}>(src, ctx, static () => {info.DestinationType.BlankTypeConstructor()}, {info.DestinationType.Name}_Utils.Populate);");
         }
         else
         {
-            mapMethod =
-                $$"""
-                              {{GeneratorUtils.InstanceTypeMapSwitchStatement("src", info)}}
-                              ctx ??= new MapperContext();
-                  
-                              // Pre Map Actions
-                              ctx.IncrementDepth();
-                              var dest = {{info.DestinationType.BlankTypeConstructor()}};
-                  {{string.Join("\n", info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"            {x.Method.Name}(src, dest{(x.Method.Parameters.Length is 3 ? ", ctx" : "")});"))}}
-                  
-                              // Property Assignment
-                  {{string.Join("\n", propertyAssignments.Select(x => $"            dest.{x.propertySymbol.Name} = {x.assignemnt};"))}}
-                  
-                              // Post Map Actions
-                  {{string.Join("\n", info.PostMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"            {x.Method.Name}(dest{(x.Method.Parameters.Length is 2 ? ", ctx" : "")});"))}}
-                  
-                              ctx.DecrementDepth();
-                              return dest;
-                  """;
+            if(GeneratorUtils.InstanceTypeMapSwitchStatement("src", info, out var statement))
+                mapMethodSb.AppendLine($"            {statement}");
+            mapMethodSb.AppendLine($"            ctx ??= new MapperContext();");
+            mapMethodSb.AppendLine($"");
+            mapMethodSb.AppendLine($"            // Pre Map Actions");
+            mapMethodSb.AppendLine($"            ctx.IncrementDepth();");
+            mapMethodSb.AppendLine($"            var dest = {info.DestinationType.BlankTypeConstructor()};");
+
+            foreach (var mapMethodInfo in info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
+            {
+                mapMethodSb.AppendLine();
+                mapMethodSb.AppendLine($"            {mapMethodInfo.Method.Name}(src, dest{(mapMethodInfo.Method.Parameters.Length is 3 ? ", ctx" : "")});");
+            }
+
+            if (propertyAssignments.Any())
+            {
+                mapMethodSb.AppendLine();
+                mapMethodSb.AppendLine("            // Property Assignment");
+
+                foreach (var propertyAssignment in propertyAssignments)
+                {
+                    mapMethodSb.AppendLine($"            dest.{propertyAssignment.propertySymbol.Name} = {propertyAssignment.assignemnt};");
+                }
+            }
+
+            if (info.PostMapMethods.Any())
+            {
+                mapMethodSb.AppendLine();
+                mapMethodSb.AppendLine("            // Post Map Actions");
+                foreach (var mapMethodInfo in info.PostMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
+                {
+                    mapMethodSb.AppendLine($"            {mapMethodInfo.Method.Name}(dest{(mapMethodInfo.Method.Parameters.Length is 2 ? ", ctx" : "")});");
+                }
+            }
+
+            mapMethodSb.AppendLine("            ctx.DecrementDepth();");
+            mapMethodSb.AppendLine("            return dest;");
         }
 
         return $$"""
@@ -172,7 +185,7 @@ public class MapperGenerator : IIncrementalGenerator
                  {{GenerateMethodDocs(info)}}        [Pure]
                          public static {{info.DestinationType.Name}} Map({{info.SourceType.Name}} src, MapperContext? ctx = null)
                          {
-                 {{mapMethod}}
+                 {{mapMethodSb}}
                          }
                      }
                  }
