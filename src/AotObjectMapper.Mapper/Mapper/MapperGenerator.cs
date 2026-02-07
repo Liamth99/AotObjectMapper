@@ -121,16 +121,16 @@ public class MapperGenerator : IIncrementalGenerator
 
         if (info.DestinationType.TypeKind is TypeKind.Interface || info.DestinationType.IsAbstract)
         {
-            mapMethod = $"            return {Utils.NoInstanceTypeMapSwitchStatement("source", info)};";
+            mapMethod = $"            return {GeneratorUtils.NoInstanceTypeMapSwitchStatement("source", info)};";
         }
         else if (info.PreserveReferences)
         {
             mapMethod =
                 $$"""
-                              {{Utils.InstanceTypeMapSwitchStatement("source", info)}}
+                              {{GeneratorUtils.InstanceTypeMapSwitchStatement("source", info)}}
                               context ??= new MapperContext();
                               
-                              return context.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(source, context, static () => {{Utils.BlankTypeConstructor(info.DestinationType)}}, {{info.DestinationType.Name}}_Utils.Populate);
+                              return context.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(source, context, static () => {{info.DestinationType.BlankTypeConstructor()}}, {{info.DestinationType.Name}}_Utils.Populate);
                   """;
 
         }
@@ -138,12 +138,12 @@ public class MapperGenerator : IIncrementalGenerator
         {
             mapMethod =
                 $$"""
-                              {{Utils.InstanceTypeMapSwitchStatement("source", info)}}
+                              {{GeneratorUtils.InstanceTypeMapSwitchStatement("source", info)}}
                               context ??= new MapperContext();
                   
                               // Pre Map Actions
                               context.IncrementDepth();
-                              var destination = {{Utils.BlankTypeConstructor(info.DestinationType)}};
+                              var destination = {{info.DestinationType.BlankTypeConstructor()}};
                   {{string.Join("\n", info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"            {x.Method.Name}(source, destination{(x.Method.Parameters.Length is 3 ? ", context" : "")});"))}}
                   
                               // Property Assignment

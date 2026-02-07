@@ -144,9 +144,9 @@ public sealed class MethodGenerationInfo
 
         Usings = ["System", "System.ComponentModel", "System.Diagnostics.Contracts", "AotObjectMapper.Abstractions.Models", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
 
-        SourceProperties = Utils.GetAllReadableProperties(sourceType).ToArray();
+        SourceProperties = sourceType.GetAllReadableProperties().ToArray();
 
-        DestinationProperties = Utils.GetAllSetableProperties(DestinationType).ToDictionary(p => p.Name);
+        DestinationProperties = DestinationType.GetAllReadableProperties().ToDictionary(p => p.Name);
 
         ForMemberMethods = UserDefinedMapperMethods
                                .Select(method =>
@@ -186,7 +186,7 @@ public sealed class MethodGenerationInfo
             {
                 if (PreserveReferences)
                 {
-                    assignments.Add(new(destProp, $"context.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>(source.{srcProp.Name}, context, static () => {Utils.BlankTypeConstructor(otherMapper.AttributeClass!.TypeArguments[2])}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)"));
+                    assignments.Add(new(destProp, $"context.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>(source.{srcProp.Name}, context, static () => {otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor()}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)"));
                 }
                 else
                     assignments.Add(new(destProp, $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(source.{srcProp.Name}, context)"));
@@ -208,7 +208,7 @@ public sealed class MethodGenerationInfo
                     if (MapEnumsByValue)
                         assignments.Add(new(destProp, $"({destProp.Type.ToDisplayString()})source.{srcProp.Name}"));
                     else
-                        assignments.Add(new(destProp, $"{Utils.EnumMapSwitchStatement($"source.{destProp.Name}", srcProp.Type, destProp.Type, ThrowExceptionOnUnmappedEnum)}"));
+                        assignments.Add(new(destProp, $"{GeneratorUtils.EnumMapSwitchStatement($"source.{destProp.Name}", srcProp.Type, destProp.Type, ThrowExceptionOnUnmappedEnum)}"));
 
                     continue;
                 }
@@ -216,15 +216,15 @@ public sealed class MethodGenerationInfo
                 if (!AllowIConvertable)
                     continue;
 
-                if (!Utils.TryGetConvertibleInfo(destProp.Type, compilation, out var destCanBeNull, out var destUnderlyingType))
+                if (!InheritanceUtils.TryGetConvertibleInfo(destProp.Type, compilation, out var destCanBeNull, out var destUnderlyingType))
                     continue;
 
-                if (!Utils.ConvertMethods.TryGetValue(destUnderlyingType?.SpecialType ?? destProp.Type.SpecialType, out var method))
+                if (!GeneratorUtils.ConvertMethods.TryGetValue(destUnderlyingType?.SpecialType ?? destProp.Type.SpecialType, out var method))
                     continue;
 
-                if (Utils.TryGetConvertibleInfo(srcProp.Type, compilation, out var canBeNull, out _))
+                if (InheritanceUtils.TryGetConvertibleInfo(srcProp.Type, compilation, out var canBeNull, out _))
                 {
-                    var formatProviderExpr = Utils.GetFormatProviderExpression(MapperType, compilation, (srcProp.Type as INamedTypeSymbol)!, (destProp.Type as INamedTypeSymbol)!);
+                    var formatProviderExpr = GeneratorUtils.GetFormatProviderExpression(MapperType, compilation, (srcProp.Type as INamedTypeSymbol)!, (destProp.Type as INamedTypeSymbol)!);
                     var convertArgsSuffix  = formatProviderExpr is null ? "" : $", {formatProviderExpr}";
 
                     if (canBeNull && SuppressNullWarnings)
