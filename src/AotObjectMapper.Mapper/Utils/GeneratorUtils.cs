@@ -68,7 +68,7 @@ public static class GeneratorUtils
             {
                 if (map.AttributeClass!.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.Append($" {sourceType.ToDisplayString()} t{i} => Map(t{i}, context),");
+                    sb.Append($" {sourceType.ToDisplayString()} t{i} => Map(t{i}, ctx),");
                     i++;
                     break;
                 }
@@ -78,7 +78,7 @@ public static class GeneratorUtils
             {
                 if (mapper.AttributeClass!.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.Append($" {sourceType.ToDisplayString()} t{i} => {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, context),");
+                    sb.Append($" {sourceType.ToDisplayString()} t{i} => {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, ctx),");
                     i++;
                     break;
                 }
@@ -107,7 +107,7 @@ public static class GeneratorUtils
             {
                 if (map.AttributeClass!.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return Map(t{i}, context);");
+                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return Map(t{i}, ctx);");
                     i++;
                     break;
                 }
@@ -117,7 +117,7 @@ public static class GeneratorUtils
             {
                 if (mapper.AttributeClass!.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, context);");
+                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, ctx);");
                     i++;
                     break;
                 }

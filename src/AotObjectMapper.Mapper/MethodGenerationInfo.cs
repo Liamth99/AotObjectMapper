@@ -178,7 +178,7 @@ public sealed class MethodGenerationInfo
             if (IgnoredMembers.Any(x => x.Equals(destProp.Name)))
                 continue;
 
-            if(TryBuildAssignmentExpression(srcProp.Type ,destProp.Type, $"source.{srcProp.Name}", srcProp.NullableAnnotation is not NullableAnnotation.None, compilation, out var expression))
+            if(TryBuildAssignmentExpression(srcProp.Type ,destProp.Type, $"src.{srcProp.Name}", srcProp.NullableAnnotation is not NullableAnnotation.None, compilation, out var expression))
                 assignments.Add(new (destProp, expression));
         }
 
@@ -187,7 +187,7 @@ public sealed class MethodGenerationInfo
             if(!DestinationProperties.TryGetValue((string)mapToMethod.Attribute.ConstructorArguments[0].Value!, out var destProp))
                 continue;
 
-            assignments.Add(new (destProp, $"{mapToMethod.Method.Name}(source{(mapToMethod.Method.Parameters.Length is 2 ? ", context" : "")})"));
+            assignments.Add(new (destProp, $"{mapToMethod.Method.Name}(src{(mapToMethod.Method.Parameters.Length is 2 ? ", ctx" : "")})"));
         }
 
         if (SuppressNullWarnings)
@@ -225,9 +225,9 @@ public sealed class MethodGenerationInfo
         if (otherMapper is not null)
         {
             if (PreserveReferences)
-                assignmentExpression = $"context.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, context, static () => {otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor()}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)";
+                assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static () => {otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor()}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)";
             else
-                assignmentExpression = $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map({sourceExpression}, context)";
+                assignmentExpression = $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map({sourceExpression}, ctx)";
 
             return true;
         }

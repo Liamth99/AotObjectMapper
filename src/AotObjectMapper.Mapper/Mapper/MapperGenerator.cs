@@ -91,20 +91,21 @@ public class MapperGenerator : IIncrementalGenerator
         sb.AppendLine($"{{");
         sb.AppendLine($"    public partial class {info.MapperType.Name}");
         sb.AppendLine($"    {{");
+        sb.AppendLine($"        [EditorBrowsable(EditorBrowsableState.Never)] // Does not work with ReSharper.");
         sb.AppendLine($"        public static partial class {info.DestinationType.Name}_Utils");
         sb.AppendLine($"        {{");
         sb.AppendLine($"            /// Populates an existing object, Designed for internal use.");
         sb.AppendLine($"            [EditorBrowsable(EditorBrowsableState.Never)] // Does not work with ReSharper.");
-        sb.AppendLine($"            public static void Populate({info.DestinationType.ToDisplayString()} destination, {info.SourceType.ToDisplayString()} source, MapperContext context)");
+        sb.AppendLine($"            public static void Populate({info.DestinationType.ToDisplayString()} dest, {info.SourceType.ToDisplayString()} src, MapperContext ctx)");
         sb.AppendLine($"            {{");
         sb.AppendLine($"                 // Pre Map Actions");
-        sb.AppendLine($"                 context.IncrementDepth();");
-        sb.AppendLine($"{string.Join("\n", info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"                 {x.Method.Name}(source, destination{(x.Method.Parameters.Length is 3 ? ", context" : "")});"))}");
+        sb.AppendLine($"                 ctx.IncrementDepth();");
+        sb.AppendLine($"{string.Join("\n", info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"                 {x.Method.Name}(src, dest{(x.Method.Parameters.Length is 3 ? ", ctx" : "")});"))}");
         sb.AppendLine($"                 // Property Assignment");
-        sb.AppendLine($"{string.Join("\n", propertyAssignments.Where(x => x.assignemnt is not ("null!" or "null" or "default!" or "default")).Select(x => $"                destination.{x.propertySymbol.Name} = {x.assignemnt};"))}");
+        sb.AppendLine($"{string.Join("\n", propertyAssignments.Where(x => x.assignemnt is not ("null!" or "null" or "default!" or "default")).Select(x => $"                dest.{x.propertySymbol.Name} = {x.assignemnt};"))}");
         sb.AppendLine($"                 // Post Map Actions");
-        sb.AppendLine($"{string.Join("\n", info.PostMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"                {x.Method.Name}(destination{(x.Method.Parameters.Length is 2 ? ", context" : "")});"))}");
-        sb.AppendLine($"                 context.DecrementDepth();");
+        sb.AppendLine($"{string.Join("\n", info.PostMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"                {x.Method.Name}(dest{(x.Method.Parameters.Length is 2 ? ", ctx" : "")});"))}");
+        sb.AppendLine($"                 ctx.DecrementDepth();");
         sb.AppendLine($"             }}");
         sb.AppendLine($"        }}");
         sb.AppendLine($"    }}");
@@ -121,16 +122,16 @@ public class MapperGenerator : IIncrementalGenerator
 
         if (info.DestinationType.TypeKind is TypeKind.Interface || info.DestinationType.IsAbstract)
         {
-            mapMethod = $"            return {GeneratorUtils.NoInstanceTypeMapSwitchStatement("source", info)};";
+            mapMethod = $"            return {GeneratorUtils.NoInstanceTypeMapSwitchStatement("src", info)};";
         }
         else if (info.PreserveReferences)
         {
             mapMethod =
                 $$"""
-                              {{GeneratorUtils.InstanceTypeMapSwitchStatement("source", info)}}
-                              context ??= new MapperContext();
+                              {{GeneratorUtils.InstanceTypeMapSwitchStatement("src", info)}}
+                              ctx ??= new MapperContext();
                               
-                              return context.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(source, context, static () => {{info.DestinationType.BlankTypeConstructor()}}, {{info.DestinationType.Name}}_Utils.Populate);
+                              return ctx.GetOrMapObject<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>(src, ctx, static () => {{info.DestinationType.BlankTypeConstructor()}}, {{info.DestinationType.Name}}_Utils.Populate);
                   """;
 
         }
@@ -138,22 +139,22 @@ public class MapperGenerator : IIncrementalGenerator
         {
             mapMethod =
                 $$"""
-                              {{GeneratorUtils.InstanceTypeMapSwitchStatement("source", info)}}
-                              context ??= new MapperContext();
+                              {{GeneratorUtils.InstanceTypeMapSwitchStatement("src", info)}}
+                              ctx ??= new MapperContext();
                   
                               // Pre Map Actions
-                              context.IncrementDepth();
-                              var destination = {{info.DestinationType.BlankTypeConstructor()}};
-                  {{string.Join("\n", info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"            {x.Method.Name}(source, destination{(x.Method.Parameters.Length is 3 ? ", context" : "")});"))}}
+                              ctx.IncrementDepth();
+                              var dest = {{info.DestinationType.BlankTypeConstructor()}};
+                  {{string.Join("\n", info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"            {x.Method.Name}(src, dest{(x.Method.Parameters.Length is 3 ? ", ctx" : "")});"))}}
                   
                               // Property Assignment
-                  {{string.Join("\n", propertyAssignments.Select(x => $"            destination.{x.propertySymbol.Name} = {x.assignemnt};"))}}
+                  {{string.Join("\n", propertyAssignments.Select(x => $"            dest.{x.propertySymbol.Name} = {x.assignemnt};"))}}
                   
                               // Post Map Actions
-                  {{string.Join("\n", info.PostMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"            {x.Method.Name}(destination{(x.Method.Parameters.Length is 2 ? ", context" : "")});"))}}
+                  {{string.Join("\n", info.PostMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value).Select(x => $"            {x.Method.Name}(dest{(x.Method.Parameters.Length is 2 ? ", ctx" : "")});"))}}
                   
-                              context.DecrementDepth();
-                              return destination;
+                              ctx.DecrementDepth();
+                              return dest;
                   """;
         }
 
@@ -169,7 +170,7 @@ public class MapperGenerator : IIncrementalGenerator
                      public partial class {{info.MapperType.Name}} : IMapper<{{info.SourceType.Name}}, {{info.DestinationType.Name}}>
                      {
                  {{GenerateMethodDocs(info)}}        [Pure]
-                         public static {{info.DestinationType.Name}} Map({{info.SourceType.Name}} source, MapperContext? context = null)
+                         public static {{info.DestinationType.Name}} Map({{info.SourceType.Name}} src, MapperContext? ctx = null)
                          {
                  {{mapMethod}}
                          }
@@ -182,8 +183,8 @@ public class MapperGenerator : IIncrementalGenerator
     {
         StringBuilder sb = new();
 
-        sb.AppendLine("        /// <param name=\"context\">Context used to manage state wile mapping</param>");
-        sb.AppendLine("        /// <param name=\"source\">The source object to map</param>");
+        sb.AppendLine("        /// <param name=\"ctx\">Context used to manage state wile mapping</param>");
+        sb.AppendLine("        /// <param name=\"src\">The source object to map</param>");
         sb.AppendLine("        /// <returns>");
         sb.AppendLine($"        /// <see cref=\"{info.DestinationType.Name}\"/> mapped from an instance of <see cref=\"{info.SourceType.Name}\"/>.");
         sb.AppendLine("        /// </returns>");
