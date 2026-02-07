@@ -6,26 +6,53 @@
     --bs-warning: #feca57;
     --bs-info: #48dbfb;
     --bs-dark: #3d3126;
-    --bs-hover-color: #e7495a;
+    --bs-hover-color: #00000000;
+    --bs-select-color: #e7495a;
+    --bb-sidebar2-nav-item-group-background-color:  #00000000;
+    --bs-bg-color: #ffd09f;
 
-    --bb-sidebar-title-text-color: var(--bs-primary);
-    --bb-sidebar-nav-item-text-active-color: var(--bs-hover-color);
-    --bb-sidebar-nav-item-text-hover-color: var(--bs-dark);
-
-    --bb-sidebar2-title-text-color: var(--bs-primary);
-    --bb-sidebar2-nav-item-text-active-color: var(--bs-hover-color);
-    --bb-sidebar2-nav-item-text-hover-color: var(--bs-dark);
-
-    --bs-btn-hover-bg: var(--bs-hover-color);
-    --bs-btn-hover-border-color: var(--bs-hover-color);
-
-    --bb-sidebar-top-row-background-color: var(--bs-dark);
-    --bb-sidebar-content-border-color: var(--bs-dark);
-    --bb-sidebar-top-row-border-color: var(--bs-dark);
-
+    --bb-sidebar2-nav-item-text-active-color: var(--bs-select-color);
     --bb-sidebar2-top-row-background-color: var(--bs-dark);
     --bb-sidebar2-content-border-color: var(--bs-dark);
     --bb-sidebar2-top-row-border-color: var(--bs-dark);
+
+    --bs-btn-hover-bg: var(--bs-hover-color);
+    --bs-btn-hover-border-color: var(--bs-hover-color);
+    --bb-sidebar2-title-text-color: var(--bs-primary);
+}
+
+[data-bs-theme=light] {
+    --bb-sidebar2-nav-item-text-color: var(--bs-dark);
+    --bb-sidebar2-nav-item-text-hover-color: var(--bs-primary);
+    --bb-sidebar2-nav-item-background-hover-color: var(--bs-secondary);
+}
+
+[data-bs-theme=dark] {
+    --bb-sidebar2-nav-item-text-color: var(--bs-primary);
+    --bb-sidebar2-nav-item-text-hover-color: var(--bs-secondary);
+    --bb-sidebar2-nav-item-background-hover-color: var(--bs-primary);
+
+    --bs-bg-color: var(--bs-secondary);
+}
+
+.bi-github{
+    color: var(--bs-primary) !important;
+}
+
+.blazorbootstrap-theme-indicator{
+    color: var(--bs-primary) !important;
+}
+
+.btn-link{
+    color: var(--bs-primary) !important;
+}
+
+.bb-sidebar2.expanded {
+    background-color: var(--bs-bg-color) !important;
+}
+
+.bb-top-row {
+    background-color: var(--bs-dark) !important;
 }
 
 html, body {

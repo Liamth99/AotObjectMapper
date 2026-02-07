@@ -11,8 +11,9 @@
     <main>
         <div class="bb-top-row px-4 d-flex justify-content-end">
             <a href="https://github.com/Liamth99/AotObjectMapper" target="_blank">
-                <Icon Name="IconName.Github" Size="IconSize.x1" Color="IconColor.Body"/>
+                <Icon Name="IconName.Github" Size="IconSize.x1" Color="IconColor.Body" style="padding: 0 10px 0 10px"/>
             </a>
+            <ThemeSwitcher />
         </div>
 
         <article class="content px-4">
@@ -30,15 +31,14 @@
     {
         NavItems = new List<NavItem>
         {
-            new (){ Id = "1", Text  = "Home", Href         = "", IconName             = IconName.HouseDoorFill, Match=NavLinkMatch.All, },
-            new (){ Id = "2", Text  = "Installation" ,Href = "Installation", IconName = IconName.Download,      },
+            new (){ Id = "1", Text  = "Home", Href = "", IconName = IconName.HouseDoorFill, Match=NavLinkMatch.All, },
+            new (){ Id = "2", Text  = "Installation" ,Href = "Installation", IconName = IconName.Download, },
             new (){ Id = "3", Text  = "Usage", IconName = IconName.Info },
             new (){ Id = "4", Text  = "Sample Classes", Href = "Usage", ParentId         = "3", },
             new (){ Id = "5", Text  = "Basic Mapper", Href = "BasicMapper", ParentId   = "3", },
             new (){ Id = "6", Text  = "Mapper Context", Href = "MapperContext", ParentId = "3", },
-            new (){ Id = "7", Text  = "Customization", ParentId = "3", IconName = IconName.GearFill},
+            new (){ Id = "7", Text  = "Customization", ParentId = "3", IconName = IconName.GearFill, },
             new (){ Id = "8", Text  = "Ignore Members", Href = "IgnoreMembers", ParentId = "7", },
-            new (){ Id = "9", Text  = "Map Method Name", Href = "MapMethodName", ParentId = "7", },
             new (){ Id = "10", Text = "Null Value Handling", Href = "NullValueHandling", ParentId = "7", },
             new (){ Id = "11", Text = "IConvertable Members", Href = "IConvertableMembers", ParentId = "7", },
             new (){ Id = "12", Text = "Enums", Href = "Enums", ParentId = "7", },
