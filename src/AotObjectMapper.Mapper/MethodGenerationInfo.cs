@@ -142,7 +142,7 @@ public sealed class MethodGenerationInfo
 
         var format = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
 
-        Usings = ["System", "System.ComponentModel", "System.Diagnostics.Contracts", "AotObjectMapper.Abstractions.Models", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
+        Usings = ["System", "System.Collections.Generic", "System.Linq", "System.ComponentModel", "System.Diagnostics.Contracts", "AotObjectMapper.Abstractions.Models", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
 
         SourceProperties = sourceType.GetAllReadableProperties().ToArray();
 
@@ -217,7 +217,7 @@ public sealed class MethodGenerationInfo
             return true;
         }
 
-        // Try use other mapper
+        // Try use other mapper class
         var otherMapper = OtherMappers.FirstOrDefault(
             attr => attr.AttributeClass?.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default) is true &&
                     attr.AttributeClass.TypeArguments[2].Equals(destinationType, SymbolEqualityComparer.Default));
@@ -228,6 +228,21 @@ public sealed class MethodGenerationInfo
                 assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static () => {otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor()}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)";
             else
                 assignmentExpression = $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map({sourceExpression}, ctx)";
+
+            return true;
+        }
+
+        // Try use other map methods
+        var otherMapMethods = PossibleTypeMaps.Where(attr => attr.source.Equals(sourceType, SymbolEqualityComparer.Default) && attr.destination.Equals(destinationType, SymbolEqualityComparer.Default)).ToArray();
+
+        if (otherMapMethods.Length > 0)
+        {
+            var method = otherMapMethods.First();
+
+            if (PreserveReferences)
+                assignmentExpression = $"ctx.GetOrMapObject<{method.source.ToDisplayString()}, {method.destination.ToDisplayString()}>({sourceExpression}, ctx, static () => {method.destination.BlankTypeConstructor()}, {MapperType.ToDisplayString()}.{method.destination.Name}_Utils.Populate)";
+            else
+                assignmentExpression = $"{MapperType.ToDisplayString()}.Map({sourceExpression}, ctx)";
 
             return true;
         }
@@ -243,10 +258,20 @@ public sealed class MethodGenerationInfo
             return true;
         }
 
+        // IEnumerable
+        if(TryGetEnumerableInitializationInfo(sourceType, out var sourceElementType))
+            if(TryGetEnumerableInitializationInfo(destinationType, out var destinationElementType))
+                if (TryBuildAssignmentExpression(sourceElementType, destinationElementType, "x", destinationElementType.NullableAnnotation is not NullableAnnotation.None, compilation, out var elementExpression))
+                    if(TryGetEnumerationInitialization(destinationType, elementExpression, out string selectExpression))
+                    {
+                        assignmentExpression = $"{sourceExpression}{selectExpression}";
+                        return true;
+                    }
+
         // IConvertable
         if (AllowIConvertable &&
             InheritanceUtils.TryGetConvertibleInfo(destinationType, compilation, out var destCanBeNull, out var destUnderlyingType) &&
-            GeneratorUtils.ConvertMethods.TryGetValue(destUnderlyingType?.SpecialType ?? destinationType.SpecialType, out var method) &&
+            GeneratorUtils.ConvertMethods.TryGetValue(destUnderlyingType?.SpecialType ?? destinationType.SpecialType, out var convertMethod) &&
             InheritanceUtils.TryGetConvertibleInfo(sourceType, compilation, out var canBeNull, out _))
         {
             var formatProviderExpr = GeneratorUtils.GetFormatProviderExpression(MapperType, compilation, (INamedTypeSymbol)sourceType, (INamedTypeSymbol)destinationType);
@@ -255,18 +280,66 @@ public sealed class MethodGenerationInfo
             if (canBeNull && SuppressNullWarnings)
             {
                 if (destCanBeNull)
-                    assignmentExpression = $"{sourceExpression} is null ? null : Convert.{method}({sourceExpression}{convertArgsSuffix})";
+                    assignmentExpression = $"{sourceExpression} is null ? null : Convert.{convertMethod}({sourceExpression}{convertArgsSuffix})";
                 else
-                    assignmentExpression = $"{sourceExpression} is null ? default! : Convert.{method}({sourceExpression}{convertArgsSuffix})";
+                    assignmentExpression = $"{sourceExpression} is null ? default! : Convert.{convertMethod}({sourceExpression}{convertArgsSuffix})";
             }
             else
-                assignmentExpression = $"Convert.{method}({sourceExpression}{convertArgsSuffix})";
+                assignmentExpression = $"Convert.{convertMethod}({sourceExpression}{convertArgsSuffix})";
 
             return true;
         }
 
         assignmentExpression = null!;
         return false;
+    }
+
+    private bool TryGetEnumerableInitializationInfo(ITypeSymbol propertyType, out ITypeSymbol elementType)
+    {
+        elementType = null!;
+
+        if (propertyType.OriginalDefinition.SpecialType is SpecialType.System_Collections_Generic_IEnumerable_T)
+        {
+            elementType = ((INamedTypeSymbol)propertyType).TypeArguments[0];
+            return true;
+        }
+
+        // Ignore string types, we don't want IEnumerable<char>
+        if (propertyType.SpecialType is SpecialType.System_String)
+            return false;
+
+        if (propertyType is IArrayTypeSymbol arrayType)
+        {
+            elementType = arrayType.ElementType;
+            return true;
+        }
+
+        foreach (var iface in propertyType.AllInterfaces)
+        {
+            if (iface.OriginalDefinition.SpecialType is SpecialType.System_Collections_Generic_IEnumerable_T)
+            {
+                elementType = iface.TypeArguments[0];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetEnumerationInitialization(ITypeSymbol propertyType, string assignmentExpression, out string initialization)
+    {
+        initialization = null!;
+
+        if (propertyType.SpecialType is SpecialType.System_Collections_Generic_IEnumerable_T)
+            initialization = $".Select(x => {assignmentExpression})";
+
+        else if (propertyType is IArrayTypeSymbol)
+            initialization = $".Select(x => {assignmentExpression}).ToArray()";
+
+        else if (propertyType.Name is "List")
+            initialization = $".Select(x => {assignmentExpression}).ToList()";
+
+        return initialization is not null;
     }
 }
 
