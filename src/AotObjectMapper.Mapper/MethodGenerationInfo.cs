@@ -330,13 +330,13 @@ public sealed class MethodGenerationInfo
     {
         initialization = null!;
 
-        if (propertyType.SpecialType is SpecialType.System_Collections_Generic_IEnumerable_T)
+        if (propertyType.Name is "IEnumerable")
             initialization = $".Select(x => {assignmentExpression})";
 
         else if (propertyType is IArrayTypeSymbol)
             initialization = $".Select(x => {assignmentExpression}).ToArray()";
 
-        else if (propertyType.Name is "List")
+        else if (propertyType.Name is "List" or "ICollection" or "IReadOnlyList" or "IReadOnlyCollection")
             initialization = $".Select(x => {assignmentExpression}).ToList()";
 
         return initialization is not null;
