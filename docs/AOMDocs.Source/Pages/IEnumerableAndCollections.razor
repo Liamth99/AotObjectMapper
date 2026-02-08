@@ -2,6 +2,87 @@
 
 <PageTitle>IEnumerable & Collections</PageTitle>
 
-@code {
-    
+<p>
+    The mapper supports mapping between enumerable types automatically when a mapping exists for the element type.
+</p>
+
+<p>
+    Any source property that implements <code>IEnumerable&lt;TSource&gt;</code> can be mapped to the following destination types:
+</p>
+
+<ul>
+    <li><code>IEnumerable&lt;TDestination&gt;</code></li>
+    <li><code>ICollection&lt;TDestination&gt;</code></li>
+    <li><code>List&lt;TDestination&gt;</code></li>
+    <li><code>TDestination[]</code></li>
+    <li><code>IReadOnlyList&lt;TDestination&gt;</code></li>
+    <li><code>IReadOnlyCollection&lt;TDestination&gt;</code></li>
+</ul>
+
+<p>
+    The only requirement is that a mapper exists for <code>TSource</code> to <code>TDestination</code>.
+</p>
+
+<p>Below is an example mapping a collection of <code>User</code> to <code>UserDto</code>.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@EnumerableMap />
+
+<p>
+    In this example, the <code>Users</code> property on <code>Company</code> implements
+    <code>IEnumerable&lt;User&gt;</code>, while the destination property on <code>CompanyDto</code>
+    is an array of <code>UserDto</code>.
+</p>
+
+<p>
+    When the project is built, the generated mapper will automatically map each element in the
+    source collection using the <code>User → UserDto</code> mapping and materialize the result
+    into the target collection type.
+</p>
+
+<p>
+    The generated mapping code will be similar to the following:
+</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@GeneratedCode />
+
+<p>
+    Ordering is preserved, and a new destination instance is created for each element in the source collection.
+</p>
+
+<p>
+    This behavior applies equally when mapping to <code>List&lt;T&gt;</code>,
+    <code>ICollection&lt;T&gt;</code>, <code>IReadOnlyList&lt;T&gt;</code> and
+    <code>IReadOnlyCollection&lt;T&gt;</code>.
+</p>
+
+@code
+{
+    const string EnumerableMap =
+"""
+public class Company
+{
+    public ICollection<User> Users { get; set; } =
+    [
+        User.Jim(),
+        User.Jim(),
+    ];
+}
+
+public class CompanyDto
+{
+    public UserDto[] Users { get; set; } = [];
+}
+
+[GenerateMapper]
+[Map<User, UserDto>]
+[Map<Company, CompanyDto>]
+public partial class CompanyMapper;
+""";
+
+    const string GeneratedCode =
+"""
+dest.Users = src.Users
+    .Select(x => CompanyMapper.Map(x, ctx))
+    .ToArray();
+""";
 }

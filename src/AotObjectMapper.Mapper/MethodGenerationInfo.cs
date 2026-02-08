@@ -53,6 +53,10 @@ public sealed class MethodGenerationInfo
     /// A collection of methods invoked after the mapping operation is complete.
     public MapMethodInfo[] PostMapMethods { get;  }
 
+    public MapMethodInfo[] AllPreMapQueries { get;  }
+
+    public MapMethodInfo[] AllPostMapQueries { get;  }
+
     /// Represents a collection of user-defined mapping methods that are explicitly specified for mapping individual
     /// members during the generation of mapping logic.
     public MapMethodInfo[] ForMemberMethods { get;  }
@@ -131,6 +135,36 @@ public sealed class MethodGenerationInfo
                             .Where(x => x.Method is not null) // Required check as above we suppress the null warning
                             .ToArray();
 
+        AllPreMapQueries = UserDefinedMapperMethods
+                       .Select(method =>
+                        {
+                            var attributes = method.GetAttributes();
+                            var attribute = attributes.SingleOrDefault(
+                                attr => attr.AttributeClass?.Name == nameof(PreMapQueryAttribute<,>));
+
+                            if (attribute is null)
+                                return new MapMethodInfo(null!, null!);
+
+                            return new MapMethodInfo(method, attribute);
+                        })
+                       .Where(x => x.Method is not null) // Required check as above we suppress the null warning
+                       .ToArray();
+
+        AllPostMapQueries = UserDefinedMapperMethods
+                        .Select(method =>
+                                {
+                                    var attributes = method.GetAttributes();
+                                    var attribute = attributes.SingleOrDefault(
+                                        attr => attr.AttributeClass?.Name == nameof(PostMapQueryAttribute<,>));
+
+                                    if (attribute is null)
+                                        return new MapMethodInfo(null!, null!);
+
+                                    return new MapMethodInfo(method, attribute);
+                                })
+                        .Where(x => x.Method is not null) // Required check as above we suppress the null warning
+                        .ToArray();
+
         int mappingOptions = Convert.ToInt32(MapperType.GetAttributes().Single(x => x.AttributeClass!.Name == nameof(GenerateMapperAttribute)).ConstructorArguments[0].Value);
 
         IgnoredMembers               = mapAttributeData.ConstructorArguments[0].Values.Select(x => x.Value).OfType<string>().ToArray();
@@ -142,7 +176,7 @@ public sealed class MethodGenerationInfo
 
         var format = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
 
-        Usings = ["System", "System.ComponentModel", "System.Diagnostics.Contracts", "AotObjectMapper.Abstractions.Models", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
+        Usings = ["System", "System.Collections.Generic", "System.Linq", "System.ComponentModel", "System.Diagnostics.Contracts", "AotObjectMapper.Abstractions.Models", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
 
         SourceProperties = sourceType.GetAllReadableProperties().ToArray();
 
@@ -217,7 +251,7 @@ public sealed class MethodGenerationInfo
             return true;
         }
 
-        // Try use other mapper
+        // Try use other mapper class
         var otherMapper = OtherMappers.FirstOrDefault(
             attr => attr.AttributeClass?.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default) is true &&
                     attr.AttributeClass.TypeArguments[2].Equals(destinationType, SymbolEqualityComparer.Default));
@@ -228,6 +262,21 @@ public sealed class MethodGenerationInfo
                 assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static () => {otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor()}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)";
             else
                 assignmentExpression = $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map({sourceExpression}, ctx)";
+
+            return true;
+        }
+
+        // Try use other map methods
+        var otherMapMethods = PossibleTypeMaps.Where(attr => attr.source.Equals(sourceType, SymbolEqualityComparer.Default) && attr.destination.Equals(destinationType, SymbolEqualityComparer.Default)).ToArray();
+
+        if (otherMapMethods.Length > 0)
+        {
+            var method = otherMapMethods.First();
+
+            if (PreserveReferences)
+                assignmentExpression = $"ctx.GetOrMapObject<{method.source.ToDisplayString()}, {method.destination.ToDisplayString()}>({sourceExpression}, ctx, static () => {method.destination.BlankTypeConstructor()}, {MapperType.ToDisplayString()}.{method.destination.Name}_Utils.Populate)";
+            else
+                assignmentExpression = $"{MapperType.ToDisplayString()}.Map({sourceExpression}, ctx)";
 
             return true;
         }
@@ -243,10 +292,20 @@ public sealed class MethodGenerationInfo
             return true;
         }
 
+        // IEnumerable
+        if(TryGetEnumerableInitializationInfo(sourceType, out var sourceElementType))
+            if(TryGetEnumerableInitializationInfo(destinationType, out var destinationElementType))
+                if (TryBuildAssignmentExpression(sourceElementType, destinationElementType, "x", destinationElementType.NullableAnnotation is not NullableAnnotation.None, compilation, out var elementExpression))
+                    if(TryGetEnumerationInitialization(destinationType, sourceElementType, destinationElementType, sourceExpression, elementExpression, out string selectExpression))
+                    {
+                        assignmentExpression = $"{selectExpression}";
+                        return true;
+                    }
+
         // IConvertable
         if (AllowIConvertable &&
             InheritanceUtils.TryGetConvertibleInfo(destinationType, compilation, out var destCanBeNull, out var destUnderlyingType) &&
-            GeneratorUtils.ConvertMethods.TryGetValue(destUnderlyingType?.SpecialType ?? destinationType.SpecialType, out var method) &&
+            GeneratorUtils.ConvertMethods.TryGetValue(destUnderlyingType?.SpecialType ?? destinationType.SpecialType, out var convertMethod) &&
             InheritanceUtils.TryGetConvertibleInfo(sourceType, compilation, out var canBeNull, out _))
         {
             var formatProviderExpr = GeneratorUtils.GetFormatProviderExpression(MapperType, compilation, (INamedTypeSymbol)sourceType, (INamedTypeSymbol)destinationType);
@@ -255,18 +314,79 @@ public sealed class MethodGenerationInfo
             if (canBeNull && SuppressNullWarnings)
             {
                 if (destCanBeNull)
-                    assignmentExpression = $"{sourceExpression} is null ? null : Convert.{method}({sourceExpression}{convertArgsSuffix})";
+                    assignmentExpression = $"{sourceExpression} is null ? null : Convert.{convertMethod}({sourceExpression}{convertArgsSuffix})";
                 else
-                    assignmentExpression = $"{sourceExpression} is null ? default! : Convert.{method}({sourceExpression}{convertArgsSuffix})";
+                    assignmentExpression = $"{sourceExpression} is null ? default! : Convert.{convertMethod}({sourceExpression}{convertArgsSuffix})";
             }
             else
-                assignmentExpression = $"Convert.{method}({sourceExpression}{convertArgsSuffix})";
+                assignmentExpression = $"Convert.{convertMethod}({sourceExpression}{convertArgsSuffix})";
 
             return true;
         }
 
         assignmentExpression = null!;
         return false;
+    }
+
+    private bool TryGetEnumerableInitializationInfo(ITypeSymbol propertyType, out ITypeSymbol elementType)
+    {
+        elementType = null!;
+
+        if (propertyType.OriginalDefinition.SpecialType is SpecialType.System_Collections_Generic_IEnumerable_T)
+        {
+            elementType = ((INamedTypeSymbol)propertyType).TypeArguments[0];
+            return true;
+        }
+
+        // Ignore string types, we don't want IEnumerable<char>
+        if (propertyType.SpecialType is SpecialType.System_String)
+            return false;
+
+        if (propertyType is IArrayTypeSymbol arrayType)
+        {
+            elementType = arrayType.ElementType;
+            return true;
+        }
+
+        foreach (var iface in propertyType.AllInterfaces)
+        {
+            if (iface.OriginalDefinition.SpecialType is SpecialType.System_Collections_Generic_IEnumerable_T)
+            {
+                elementType = iface.TypeArguments[0];
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetEnumerationInitialization(ITypeSymbol destinationPropertyType, ITypeSymbol sourceElementType, ITypeSymbol destinationElementType, string sourceExpression, string assignmentExpression, out string initialization)
+    {
+        initialization = null!;
+
+        var preMapQuery  = AllPreMapQueries.SingleOrDefault(x => x.Attribute.AttributeClass!.TypeArguments[0].Equals(sourceElementType,  SymbolEqualityComparer.Default) && x.Attribute.AttributeClass!.TypeArguments[1].Equals(destinationElementType, SymbolEqualityComparer.Default));
+        var postMapQuery = AllPostMapQueries.SingleOrDefault(x => x.Attribute.AttributeClass!.TypeArguments[0].Equals(sourceElementType, SymbolEqualityComparer.Default) && x.Attribute.AttributeClass!.TypeArguments[1].Equals(destinationElementType, SymbolEqualityComparer.Default));
+
+        string selectExpression;
+
+        if (preMapQuery is not null)
+            selectExpression = $"{preMapQuery.Method.Name}({sourceExpression}{(preMapQuery.Method.Parameters.Length is 2 ? ", ctx" : "")}).Select(x => {assignmentExpression})";
+        else
+            selectExpression = $"{sourceExpression}.Select(x => {assignmentExpression})";
+
+        if (postMapQuery is not null)
+            selectExpression = $"{postMapQuery.Method.Name}({selectExpression}{(postMapQuery.Method.Parameters.Length is 2 ? ", ctx" : "")})";
+
+        if (destinationPropertyType.Name is "IEnumerable")
+            initialization = selectExpression;
+
+        else if (destinationPropertyType is IArrayTypeSymbol)
+            initialization = $"{selectExpression}.ToArray()";
+
+        else if (destinationPropertyType.Name is "List" or "ICollection" or "IReadOnlyList" or "IReadOnlyCollection")
+            initialization = $"{selectExpression}.ToList()";
+
+        return initialization is not null;
     }
 }
 

@@ -1,0 +1,154 @@
+﻿@page "/EnumerableQueries"
+
+<PageTitle>Enumerable Queries</PageTitle>
+
+<p>
+    In addition to automatic enumerable mapping, the mapper allows custom LINQ queries
+    to be injected into the collection mapping pipeline.
+</p>
+
+<p>
+    Enumerable queries can be used to filter, reorder, or otherwise transform a collection
+    either <em>before</em> or <em>after</em> element mapping occurs.
+</p>
+
+<p>
+    Enumerable queries can use the <code>MapperContext</code> to apply dynamic,
+    runtime-controlled behavior during collection mapping.
+</p>
+
+<p>
+    The <code>MapperContext</code> exposes an <code>AdditionalContext</code> dictionary
+    that can be populated by the caller and consumed by pre-map and post-map queries.
+</p>
+
+<h3>Context-driven pre-map queries</h3>
+
+<p>
+    A <code>PreMapQuery</code> can inspect the context to decide which source elements
+    should be mapped.
+</p>
+
+<p>
+    This example conditionally excludes inactive users based on a flag stored in the
+    mapping context.
+</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@PreMapExample />
+
+<p>
+    The context value is provided by the caller at runtime:
+</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@ContextSetup />
+
+<h3>Context-driven post-map queries</h3>
+
+<p>
+    A <code>PostMapQuery</code> can use the context to modify the mapped collection
+    without affecting the source mapping.
+</p>
+
+<p>
+    This example conditionally limits the number of mapped results returned.
+</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@PostMapExample />
+
+<h3>Combining pre-map and post-map queries</h3>
+
+<p>
+    Pre-map and post-map queries can be combined to implement complex, policy-driven
+    mapping behavior using a single mapper.
+</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@BothExample />
+
+@code
+{
+    const string PreMapExample =
+"""
+[GenerateMapper]
+[UseMap<UserMapper, User, UserDto>]
+[Map<Company, CompanyDto>]
+public partial class CompanyMapper_FilterInactiveUsers
+{
+    [PreMapQuery<User, UserDto>]
+    public static IEnumerable<User> FilterInactiveUsers(IEnumerable<User> users, MapperContext ctx)
+    {
+        if (!ctx.AdditionalContext.TryGetValue("IncludeInactiveUsers", out var value) ||
+            value is not bool includeInactive ||
+            includeInactive)
+        {
+            return users;
+        }
+
+        return users.Where(u => u.IsActive);
+    }
+}
+""";
+
+    const string PostMapExample =
+"""
+[GenerateMapper]
+[UseMap<UserMapper, User, UserDto>]
+[Map<Company, CompanyDto>]
+public partial class CompanyMapper_LimitResults
+{
+    [PostMapQuery<User, UserDto>]
+    public static IEnumerable<UserDto> LimitResults(IEnumerable<UserDto> users, MapperContext ctx)
+    {
+        if (!ctx.AdditionalContext.TryGetValue("MaxUsers", out var value) ||
+            value is not int maxUsers)
+        {
+            return users;
+        }
+
+        return users.Take(maxUsers);
+    }
+}
+""";
+
+    const string BothExample =
+"""
+[GenerateMapper]
+[UseMap<UserMapper, User, UserDto>]
+[Map<Company, CompanyDto>]
+public partial class CompanyMapper_PolicyDriven
+{
+    [PreMapQuery<User, UserDto>]
+    public static IEnumerable<User> FilterInactiveUsers(IEnumerable<User> users, MapperContext ctx)
+    {
+        if (ctx.AdditionalContext.TryGetValue("IncludeInactiveUsers", out var value) &&
+            value is bool includeInactive &&
+            !includeInactive)
+        {
+            return users.Where(u => u.IsActive);
+        }
+
+        return users;
+    }
+
+    [PostMapQuery<User, UserDto>]
+    public static IEnumerable<UserDto> LimitResults(IEnumerable<UserDto> users, MapperContext ctx)
+    {
+        if (ctx.AdditionalContext.TryGetValue("MaxUsers", out var value) &&
+            value is int maxUsers)
+        {
+            return users.Take(maxUsers);
+        }
+
+        return users;
+    }
+}
+""";
+
+    const string ContextSetup =
+"""
+var ctx = new MapperContext();
+ctx.AdditionalContext["IncludeInactiveUsers"] = false;
+ctx.AdditionalContext["MaxUsers"] = 10;
+
+var dto = CompanyMapper_PolicyDriven.Map(company, ctx);
+""";
+}

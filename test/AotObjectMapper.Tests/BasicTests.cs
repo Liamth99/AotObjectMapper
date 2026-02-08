@@ -1,6 +1,5 @@
 ﻿namespace AotObjectMapper.Tests;
 
-
 [GenerateMapper]
 [Map<User, UserDto>]
 [Map<UserDto, User>]
