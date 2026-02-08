@@ -370,12 +370,12 @@ public sealed class MethodGenerationInfo
         string selectExpression;
 
         if (preMapQuery is not null)
-            selectExpression = $"{preMapQuery.Method.Name}({sourceExpression}, ctx).Select(x => {assignmentExpression})";
+            selectExpression = $"{preMapQuery.Method.Name}({sourceExpression}{(preMapQuery.Method.Parameters.Length is 2 ? ", ctx" : "")}).Select(x => {assignmentExpression})";
         else
             selectExpression = $"{sourceExpression}.Select(x => {assignmentExpression})";
 
         if (postMapQuery is not null)
-            selectExpression = $"{postMapQuery.Method.Name}({selectExpression}, ctx)";
+            selectExpression = $"{postMapQuery.Method.Name}({selectExpression}{(postMapQuery.Method.Parameters.Length is 2 ? ", ctx" : "")})";
 
         if (destinationPropertyType.Name is "IEnumerable")
             initialization = selectExpression;

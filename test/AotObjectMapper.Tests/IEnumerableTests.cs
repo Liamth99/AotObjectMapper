@@ -11,6 +11,36 @@ public partial class CompanyMapper;
 
 [GenerateMapper]
 [UseMap<UserMapper, User, UserDto>]
+[Map<Company, CompanyDto>]
+public partial class CompanyMapper_SkipPre
+{
+    [PreMapQuery<User, UserDto>]
+    public static IEnumerable<User> SkipUser(IEnumerable<User> users, MapperContext ctx) => users.Where(x => x.FirstName is not "skip pre");
+}
+
+[GenerateMapper]
+[UseMap<UserMapper, User, UserDto>]
+[Map<Company, CompanyDto>]
+public partial class CompanyMapper_SkipPost
+{
+    [PostMapQuery<User, UserDto>]
+    public static IEnumerable<UserDto> SkipUser(IEnumerable<UserDto> users, MapperContext ctx) => users.Where(x => x.FirstName is not "skip post");
+}
+
+[GenerateMapper]
+[UseMap<UserMapper, User, UserDto>]
+[Map<Company, CompanyDto>]
+public partial class CompanyMapper_SkipBoth
+{
+    [PreMapQuery<User, UserDto>]
+    public static IEnumerable<User> SkipUser_Pre(IEnumerable<User> users) => users.Where(x => x.FirstName is not "skip pre");
+
+    [PostMapQuery<User, UserDto>]
+    public static IEnumerable<UserDto> SkipUser_Post(IEnumerable<UserDto> users) => users.Where(x => x.FirstName is not "skip post");
+}
+
+[GenerateMapper]
+[UseMap<UserMapper, User, UserDto>]
 [Map<Company, CompanyDto_Arr>]
 public partial class CompanyDto_ArrMapper;
 
@@ -34,7 +64,7 @@ public partial class CompanyDto_ReadOnlyListMapper;
 [Map<Company, CompanyDto_ReadOnlyCollection>]
 public partial class CompanyDto_ReadOnlyCollectionMapper;
 
-public class Company    { public IEnumerable<User> Users { get; set; } = [User.Jim(), User.Jim(),]; }
+public class Company    { public IEnumerable<User> Users { get; set; } = [User.Jim(), User.Jim(), new () { FirstName = "skip pre", }, new () { FirstName = "skip post", },]; }
 
 public class CompanyDto                    { public IEnumerable<UserDto>         Users { get; set; } = []; }
 public class CompanyDto_Arr                { public UserDto[]                    Users { get; set; } = []; }
@@ -65,6 +95,39 @@ public class IEnumerableTests
 
         users.ShouldBeAssignableTo(expectedType);
         users.Count().ShouldBe(src.Users.Count());
-
     }
+
+    [Fact]
+    public void PreMapQueries_Runs()
+    {
+        var src = new Company();
+
+        var dto = CompanyMapper_SkipPre.Map(src);
+
+        dto.Users.Count().ShouldBe(src.Users.Count() - 1);
+        dto.Users.Any(x => x.FirstName is "skip pre").ShouldBeFalse();
+    }
+
+    [Fact]
+    public void PostMapQueries_Runs()
+    {
+        var src = new Company();
+
+        var dto = CompanyMapper_SkipPost.Map(src);
+
+        dto.Users.Count().ShouldBe(src.Users.Count() - 1);
+        dto.Users.Any(x => x.FirstName is "skip post").ShouldBeFalse();
+    }
+
+    [Fact]
+    public void BothMapQueries_Runs()
+    {
+        var src = new Company();
+
+        var dto = CompanyMapper_SkipBoth.Map(src);
+
+        dto.Users.Count().ShouldBe(src.Users.Count() - 2);
+        dto.Users.Any(x => x.FirstName is "skip pre" or "skip post").ShouldBeFalse();
+    }
+
 }
