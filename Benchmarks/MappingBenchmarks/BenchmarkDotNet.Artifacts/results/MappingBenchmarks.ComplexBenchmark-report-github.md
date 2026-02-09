@@ -9,10 +9,10 @@ AMD Ryzen 5 7600 3.80GHz, 1 CPU, 12 logical and 6 physical cores
 WarmupCount=10  
 
 ```
-| Method              | Categories | Mean      | Error    | StdDev    | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
-|-------------------- |----------- |----------:|---------:|----------:|------:|--------:|-------:|----------:|------------:|
-| Manual              | Baseline   |  21.73 ns | 0.427 ns |  0.379 ns |  1.00 |    0.02 | 0.0105 |     176 B |        1.00 |
-| &#39;&gt; AotObjectMapper&#39; | Source Gen |  75.04 ns | 3.545 ns | 10.452 ns |  3.45 |    0.48 | 0.0310 |     520 B |        2.95 |
-| Mapster             | Reflection | 197.89 ns | 4.523 ns | 13.122 ns |  9.11 |    0.62 | 0.0310 |     520 B |        2.95 |
-| Mapperly            | Source Gen | 240.87 ns | 4.710 ns | 10.038 ns | 11.09 |    0.49 | 0.0548 |     920 B |        5.23 |
-| AutoMapper          | Reflection | 243.57 ns | 4.742 ns |  4.869 ns | 11.21 |    0.29 | 0.0277 |     464 B |        2.64 |
+| Method              | Categories | Mean     | Error   | StdDev  | Ratio | RatioSD | Allocated | Alloc Ratio |
+|-------------------- |----------- |---------:|--------:|--------:|------:|--------:|----------:|------------:|
+| &#39;&gt; AotObjectMapper&#39; | Source Gen | 218.6 ns | 0.46 ns | 0.43 ns |  0.92 |    0.00 |   1.34 KB |        1.10 |
+| Manual              | Baseline   | 237.3 ns | 1.20 ns | 1.06 ns |  1.00 |    0.01 |   1.21 KB |        1.00 |
+| Mapster             | Reflection | 600.5 ns | 3.56 ns | 3.33 ns |  2.53 |    0.02 |   1.34 KB |        1.11 |
+| Mapperly            | Source Gen | 638.2 ns | 1.89 ns | 1.77 ns |  2.69 |    0.01 |   1.86 KB |        1.54 |
+| AutoMapper          | Reflection | 803.7 ns | 1.86 ns | 1.65 ns |  3.39 |    0.02 |   1.23 KB |        1.01 |
