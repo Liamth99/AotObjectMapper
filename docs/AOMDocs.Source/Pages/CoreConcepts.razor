@@ -1,0 +1,121 @@
+﻿@page "/CoreConcepts"
+
+<PageTitle>Core Concepts</PageTitle>
+
+<h1>Core Concepts</h1>
+
+<h2>Mappers</h2>
+
+<p>A mapper is defined as a <code>partial</code> class annotated with the <code>[GenerateMapper]</code> attribute.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@EmptyMap />
+
+<p>The mapper class acts as a container for one or more mapping definitions and owns all configuration related to those mappings.</p>
+
+<p>At build time, the source generator emits static mapping methods on the mapper class.</p>
+
+<h2>Maps</h2>
+
+<p>Mappings are declared using the <code>[Map&lt;TSource, TDestination&gt;]</code> attribute.</p>
+
+<h3>Single Map:</h3>
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@SingleMap />
+
+<h3>Multiple Map:</h3>
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@MultiMap />
+
+<p>Each <code>Map</code> attribute defines a single, directional mapping between two types. Multiple mappings can be declared on the same mapper class. Mappings are resolved entirely at compile time. If a mapping is not declared, no code is generated for it.</p>
+
+<h2>Generated Mapping Methods</h2>
+
+<p>For each declared map, the generator emits a static <code>Map</code> method on the mapper class.</p>
+
+<ul>
+    <li>Methods are static</li>
+    <li>No mapper instances are created</li>
+    <li>No runtime configuration is used (unless custom context data is provided and consumed manually, covered <a href="/MapperContext">here</a>)</li>
+</ul>
+
+<h2>Automatic Member Mapping</h2>
+
+<p>By default, the generator attempts to map members automatically based on simple matching rules.</p>
+
+<p>A member is automatically mapped when:</p>
+
+<ul>
+    <li>The source and destination member names match</li>
+    <li>The source member type is assignable or mappable to the destination member type</li>
+    <li>Both members are accessible</li>
+</ul>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@BasicUserClasses />
+
+<p>In this case, both <code>Id</code> and <code>FirstName</code> are mapped automatically.</p>
+
+<h2>Using Other Mappers</h2>
+
+<p>For more complex scenarios, a mapper can reference mappings defined in other mapper classes.</p>
+
+<p>This allows different mappers to use different configurations while still composing larger object graphs.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code=@UseOtherExample />
+
+<p>The <code>UseMap&lt;TMapper, TSource, TDestination&gt;</code> attribute declares that the current mapper may use an existing mapping defined on another mapper.</p>
+
+<p><code>UseMap</code> enables:</p>
+
+<ul>
+    <li>Separation of concerns between mapping configurations</li>
+    <li>Reuse of existing mappings without duplicating configuration</li>
+</ul>
+
+<p>Each mapper maintains its own configuration and options, while explicitly opting into external mappings when needed.</p>
+
+@code
+{
+    const string EmptyMap =
+"""
+[GenerateMapper]
+public partial class UserMapper;
+""";
+
+    const string SingleMap =
+"""
+[GenerateMapper]
+[Map<User, UserDto>]
+public partial class UserMapper;
+""";
+
+    const string MultiMap =
+"""
+[GenerateMapper]
+[Map<User, UserDto>, Map<UserDto, User>]
+public partial class UserMapper;
+""";
+
+    const string BasicUserClasses =
+"""
+public class User
+{
+    public Guid Id { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+}
+
+public class UserDto
+{
+    public Guid Id { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+}
+
+""";
+
+
+    const string UseOtherExample =
+"""
+[GenerateMapper]
+[Map<EmployeeEntity, EmployeeDto>]
+[UseMap<DepartmentMapper, DepartmentEntity, DepartmentDto>]
+public partial class EmployeeMapper;
+""";
+
+}

@@ -6,17 +6,6 @@
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
-<ol>
-    @foreach (var navItem in MainLayout.NavItems.Where(x => x.ParentId is "3" or "7" && x.Href is not null).Skip(1))
-    {
-        <li>
-            <a href="@navItem.Href">
-                @navItem.Text
-            </a>
-        </li>
-    }
-</ol>
-
 @code
  {
      const string Code =

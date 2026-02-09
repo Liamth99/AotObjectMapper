@@ -48,6 +48,12 @@ public class MapperContext
         _maxDepth = maxDepth;
     }
 
+    ///
+    public MapperContext(Dictionary<string, object> additionalContext, int? maxDepth = null) : this(maxDepth)
+    {
+        AdditionalContext = additionalContext;
+    }
+
     /// Represents the current depth level of a mapping process.
     public int Depth => _depth;
     private int _depth;
@@ -87,7 +93,7 @@ public class MapperContext
     /// <summary>
     /// A dictionary used to store additional contextual information for the mapping process.
     /// </summary>
-    public readonly Dictionary<string, object> AdditionalContext = new ();
+    public Dictionary<string, object> AdditionalContext { get; } = new();
 
     private readonly Dictionary<object, object> _existingRefencedObjects = new (ReferenceEqualityComparer.Instance);
 
