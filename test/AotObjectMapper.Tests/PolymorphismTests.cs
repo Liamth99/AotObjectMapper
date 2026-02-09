@@ -85,6 +85,6 @@ public partial class PolymorphismTests
 
         var ex = Should.Throw<UnhandledPolymorphicTypeException>(() => AnimalMapper.Map(source));
 
-        ex.Message.ShouldBe("Could not map type `AotObjectMapper.Tests.Bird` to `AotObjectMapper.Tests.IAnimalDto` - no matching destination type found.");
+        ex.Message.ShouldBe("Could not map type `AotObjectMapper.Tests.PolymorphismTests+Bird` to `AotObjectMapper.Tests.PolymorphismTests.IAnimalDto` - no matching destination type found.");
     }
 }
