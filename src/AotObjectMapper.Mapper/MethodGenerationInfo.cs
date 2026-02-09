@@ -31,6 +31,8 @@ public sealed class MethodGenerationInfo
     /// Represents the namespace where the generated mapper code will be placed.
     public string Namespace  { get;  }
 
+    public string[] ClassNests { get; }
+
     /// A collection of namespaces that will be included as `using` directives in the generated mapper class.
     public List<string> Usings { get;  }
 
@@ -53,8 +55,11 @@ public sealed class MethodGenerationInfo
     /// A collection of methods invoked after the mapping operation is complete.
     public MapMethodInfo[] PostMapMethods { get;  }
 
+    /// Represents an array containing all pre-mapping queries extracted from methods annotated with relevant attributes for use in the object mapping process.
     public MapMethodInfo[] AllPreMapQueries { get;  }
 
+    /// Represents a collection of map method information that corresponds to post-map query operations
+    /// defined in the context of a mapping process.
     public MapMethodInfo[] AllPostMapQueries { get;  }
 
     /// Represents a collection of user-defined mapping methods that are explicitly specified for mapping individual
@@ -78,6 +83,7 @@ public sealed class MethodGenerationInfo
         Namespace       = MapperType.ContainingNamespace.ToDisplayString() == "<global namespace>" ? string.Empty : MapperType.ContainingNamespace.ToDisplayString();
         Maps            = MapperType.GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(MapAttribute<,>)).ToArray();
         OtherMappers    = MapperType.GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(UseMapAttribute<,,>)).ToArray();
+        ClassNests      = new string(mapperType.OriginalDefinition.ToString().Skip(Namespace.Length).ToArray()).Split(['.'], StringSplitOptions.RemoveEmptyEntries).ToArray();
 
         AllMaps = Maps.Concat(OtherMappers.SelectMany(x => x.AttributeClass!.TypeArguments[0].GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(MapAttribute<,>)))).ToArray();
 
