@@ -2,11 +2,30 @@
 
 <PageTitle>IConvertable Members</PageTitle>
 
-<p>Any source member that implements IConvertible and can convert to a destination member with the same name can be mapped automatically.</p>
+<h1>IConvertable Members</h1>
 
-<p>Add default format providers with UseFormatProvider, or specify providers for specific conversions using UseFormatProvider&lt;TSource, TDestination&gt;.</p>
+<p>Members that implement <code>IConvertible</code> can be automatically mapped if:</p>
+
+<ul>
+    <li>The source member implements <code>IConvertible</code></li>
+    <li>The destination member type is compatible with a conversion from the source</li>
+    <li>Both members share the same name</li>
+</ul>
+
+<p>This allows simple type conversions (e.g., <code>int ↔ string</code>, <code>double ↔ decimal</code>) to happen without manual mapping.</p>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+<h2>Format Providers</h2>
+
+<p>Format providers control how conversions are performed for <code>IConvertible</code> types:</p>
+
+<ul>
+    <li><code>[UseFormatProvider]</code> without type parameters sets a default provider for all convertible members</li>
+    <li><code>[UseFormatProvider&lt;TSource, TDestination&gt;]</code> sets a specific provider for a given source/destination pair</li>
+</ul>
+
+<p>The most specific provider is used first, then the default if none matches or none if no default is provided.</p>
 
 @code
 {
@@ -19,10 +38,11 @@ public partial class MapperClass
     [UseFormatProvider]
     private static IFormatProvider Default => CultureInfo.CurrentCulture;
 
-    // int <-> string only
+    // `int <-> string` and `double -> int` only
     [UseFormatProvider<int, string>]
     [UseFormatProvider<string, int>]
-    private static IFormatProvider IntStringFormat => CultureInfo.InvariantCulture;
+    [UseFormatProvider<double, int>]
+    private static IFormatProvider NumberFormat => CultureInfo.InvariantCulture;
 }
 """;
 }

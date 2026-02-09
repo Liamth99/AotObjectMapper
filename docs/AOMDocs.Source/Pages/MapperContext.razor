@@ -1,11 +1,49 @@
 ﻿@page "/MapperContext"
+
 <PageTitle>Mapper Context</PageTitle>
 
-<p>Some mapping scenarios require a context to manage state, prevent issues such as infinite recursion, or provide additional data. If no context is passed to a mapping method, a default instance is created automatically.</p>
+<h1>Mapper Context</h1>
+
+<p>Some mapping scenarios require a shared state during the mapping process.</p>
+
+<p><code>MapperContext</code> provides this state and allows mappings to coordinate behavior across nested mapping operations.</p>
+
+<p>If no context is supplied when calling a generated mapping method and one is required, a default instance is created automatically.</p>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
-<p>The context also supports reference preservation, which is covered later.</p>
+<p><code>MapperContext</code> is used to:</p>
+
+<ul>
+    <li>Tracking and optionally enforcing mapping depth</li>
+    <li>Preserve object references during mapping (<a href="ReferencePreservation">Opt in only</a>)</li>
+</ul>
+
+<p>The context is passed through all generated mapping methods that participate in a single mapping operation.</p>
+
+<h2>Lifetime and Scope</h2>
+
+<p>A <code>MapperContext</code> instance represents a single logical mapping operation.</p>
+
+<ul>
+    <li>It is created by the caller or implicitly by the generated mapper</li>
+    <li>It is shared across all nested mapping calls</li>
+    <li>It is not static or global</li>
+</ul>
+
+<p>Contexts should <strong>NOT</strong> be reused across unrelated mapping operations.</p>
+
+<h2>Additional Context Data</h2>
+
+<p>The context exposes a dictionary for arbitrary user-defined data:</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@AddData />
+
+<p>This data can be accessed from manual mapping configuration such as manual member mapping, map queries, pre/post map actions ect.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@UseData />
+
+<p>This allows external data to participate in the mapping process without relying on global state.</p>
 
 @code
 {
@@ -16,5 +54,19 @@ var context = new MapperContext(maxDepth: 50);
 context.AdditionalContext.Add("ExtraMetadata", ....);
 
 var dto = UserMapper.Map(user, context);
+""";
+
+    const string AddData =
+"""
+context.AdditionalContext.Add("CorrelationId", correlationId);
+""";
+
+    const string UseData =
+"""
+public static string MapName(Source source, MapperContext context)
+{
+    var id = context.AdditionalContext["CorrelationId"];
+    ...
+}
 """;
 }

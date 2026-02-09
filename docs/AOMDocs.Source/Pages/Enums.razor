@@ -2,14 +2,23 @@
 
 <PageTitle>Enums</PageTitle>
 
-<p>By default, enums are mapped by field name and fall back to the zero value if no matching field is found.</p>
+<h1>Enums</h1>
 
-<p>Map enums by value instead:</p>
+<p>By default, enum members are mapped by name. If the source enum value matches a field name in the destination enum, it is mapped if no match is found, the destination enum is assigned its default value (bitwise zero).</p>
 
-<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code="[GenerateMapper(options: MappingOptions.MapEnumsByValue)]" />
+<h2>Throw on Unmapped Values</h2>
 
-<p>Throw an exception when no matching enum value is found:</p>
+<p>To throw an exception when a source enum value has no corresponding destination enum field, use:</p>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code="[GenerateMapper(options: MappingOptions.ThrowExceptionOnUnmappedEnum)]" />
 
-<p>note: this does nothing if MapEnumsByValue is set.</p>
+<ul>
+    <li>Ensures that unmapped enum values are detected at runtime</li>
+    <li>Throws an <code>EnumMissingFieldException</code></li>
+    <li><strong>Note</strong>: This option has no effect if <code>MapEnumsByValue</code> is set</li>
+</ul>
+
+<h2>Map By Value</h2>
+
+<p>To map enums based on their underlying numeric value instead of name, use:</p>
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="false" Code="[GenerateMapper(options: MappingOptions.MapEnumsByValue)]" />

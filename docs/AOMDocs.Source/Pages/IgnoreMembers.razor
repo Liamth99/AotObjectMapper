@@ -2,9 +2,24 @@
 
 <PageTitle>Ignore Members</PageTitle>
 
-<p>Specific members can be ignored for a mapping. The example below skips Id and MiddleName.</p>
+<h1>Ignore Members</h1>
+
+<p>Specific members can be excluded from automatic mapping by using the <code>ignoredMembers</code> parameter on the <code>Map</code> attribute.</p>
+
+<p>Ignored members are never considered for automatic mapping even if configured by manual means.</p>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+<p>In this example, <code>Id</code> and <code>MiddleName</code> are excluded from the mapping.</p>
+
+<h2>Scope</h2>
+
+<p>Ignored members are scoped per mapping.</p>
+
+<ul>
+    <li>They apply only to the <code>Map&lt;TSource, TDestination&gt;</code> declaration on which they are defined</li>
+    <li>Other mappings on the same mapper are unaffected</li>
+</ul>
 
 @code
 {
