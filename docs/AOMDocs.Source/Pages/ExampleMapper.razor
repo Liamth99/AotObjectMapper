@@ -6,6 +6,8 @@
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
+<p>Below is the output of the program with the object reference ids shown to highlight the preserved references.</p>
+
 <CodeBlock Language="CodeLanguage.Json" EnableLineNumbers="false" Code=@Out />
 
 @code {
@@ -29,16 +31,16 @@ namespace MapperDemo
         public string         LastName    { get; set; } = string.Empty;
         public DateTimeOffset DateOfBirth { get; set; }
         public double         Age         => (DateTimeOffset.Now - DateOfBirth).TotalDays / 365.25;
-        public List<Address>  Addresses   { get; set; } = new();
+        public List<Address>  Addresses   { get; set; } = [];
     }
 
     public class UserDto
     {
-        public Guid             Id          { get; set; }
-        public string           FullName    { get; set; } = string.Empty;
-        public int              YearOfBirth { get; set; }
-        public string           Age         { get; set; } = string.Empty;
-        public List<AddressDto> Addresses   { get; set; } = new();
+        public Guid                            Id          { get; set; }
+        public string                          FullName    { get; set; } = string.Empty;
+        public int                             YearOfBirth { get; set; }
+        public string                          Age         { get; set; } = string.Empty;
+        public IReadonlyCollection<AddressDto> Addresses   { get; set; } = [];
     }
 
     public class Address
@@ -50,9 +52,9 @@ namespace MapperDemo
 
     public class AddressDto
     {
-        public string        Street    { get; set; } = string.Empty;
-        public string        City      { get; set; } = string.Empty;
-        public List<UserDto> Occupants { get; set; } = [];
+        public string                       Street    { get; set; } = string.Empty;
+        public string                       City      { get; set; } = string.Empty;
+        public IReadonlyCollection<UserDto> Occupants { get; set; } = [];
     }
 
     // User Mapper

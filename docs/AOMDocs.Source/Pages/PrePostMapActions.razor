@@ -9,9 +9,9 @@
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
 <ul>
-    <li>PreMap runs before the automatic mapping of members</li>
-    <li>PostMap runs after all automatic and manual member mappings have been applied</li>
-    <li>Methods must be static and can optionally accept a MapperContext</li>
+    <li><code>PreMap</code> runs before the automatic mapping of members</li>
+    <li><code>PostMap</code> runs after all automatic and manual member mappings have been applied</li>
+    <li>Methods must be static and can optionally accept a <code>MapperContext</code></li>
     <li>Method names are arbitrary, the hook is determined by the attribute</li>
 </ul>
 
@@ -24,7 +24,7 @@
 public partial class UserMapper
 {
     [PreMap<User, UserDto>]
-    public static void PreMapAction_1(User source)
+    public static void PreMapAction(User source)
     {
         // Logic to execute before mapping
         // e.g., validation, logging, modifying source
@@ -37,7 +37,7 @@ public partial class UserMapper
         // e.g., additional computation, enrichment
     }
 
-    // Use Conditional attributes for extra flexibility
+    // Use Conditional attributes to only run during certiain configurations
     [Conditional("DEBUG"), PostMap<User, UserDto>(priority: int.MaxValue)]
     public static void ValidateUser(UserDto user)
     {

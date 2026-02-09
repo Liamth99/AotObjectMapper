@@ -1,7 +1,6 @@
 # AotObjectMapper
 [![NuGet Version](https://img.shields.io/nuget/v/AotObjectMapper.Mapper.svg)](https://www.nuget.org/packages/AotObjectMapper.Mapper/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/AotObjectMapper.Mapper.svg)](https://www.nuget.org/packages/AotObjectMapper.Mapper/)
-[![GitHub Release](https://img.shields.io/github/v/release/Liamth99/AotObjectMapper)](https://github.com/Liamth99/AotObjectMapper/releases)
 [![License](https://img.shields.io/github/license/Liamth99/AotObjectMapper)](https://github.com/Liamth99/AotObjectMapper/blob/master/LICENSE)
 
 AotObjectMapper is a C# Roslyn source generator for compile-time object mapping.
@@ -84,7 +83,7 @@ public partial class UserMapper;
    - Skip specific members in a mapping using `ignoredMembers` on `[Map]`.
 
 - IConvertible Member Mapping
-    - Automatically maps members implementing IConvertible with optional format providers (`[UseFormatProvider]`).
+    - Automatically maps members implementing `IConvertible` with optional format providers.
 
 - Mapper Context
     - Optional MapperContext tracks depth, reference reuse, and additional data
