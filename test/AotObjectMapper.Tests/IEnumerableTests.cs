@@ -4,78 +4,77 @@
 
 namespace AotObjectMapper.Tests;
 
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto>]
-public partial class CompanyMapper;
-
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto>]
-public partial class CompanyMapper_SkipPre
+public partial class IEnumerableTests
 {
-    [PreMapQuery<User, UserDto>]
-    public static IEnumerable<User> SkipUser(IEnumerable<User> users, MapperContext ctx) => users.Where(x => x.FirstName is not "skip pre");
-}
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto>]
+    public partial class CompanyMapper;
 
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto>]
-public partial class CompanyMapper_SkipPost
-{
-    [PostMapQuery<User, UserDto>]
-    public static IEnumerable<UserDto> SkipUser(IEnumerable<UserDto> users, MapperContext ctx) => users.Where(x => x.FirstName is not "skip post");
-}
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto>]
+    public partial class CompanyMapper_SkipPre
+    {
+        [PreMapQuery<User, UserDto>]
+        public static IEnumerable<User> SkipUser(IEnumerable<User> users, MapperContext ctx) => users.Where(x => x.FirstName is not "skip pre");
+    }
 
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto>]
-public partial class CompanyMapper_SkipBoth
-{
-    [PreMapQuery<User, UserDto>]
-    public static IEnumerable<User> SkipUser_Pre(IEnumerable<User> users) => users.Where(x => x.FirstName is not "skip pre");
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto>]
+    public partial class CompanyMapper_SkipPost
+    {
+        [PostMapQuery<User, UserDto>]
+        public static IEnumerable<UserDto> SkipUser(IEnumerable<UserDto> users, MapperContext ctx) => users.Where(x => x.FirstName is not "skip post");
+    }
 
-    [PostMapQuery<User, UserDto>]
-    public static IEnumerable<UserDto> SkipUser_Post(IEnumerable<UserDto> users) => users.Where(x => x.FirstName is not "skip post");
-}
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto>]
+    public partial class CompanyMapper_SkipBoth
+    {
+        [PreMapQuery<User, UserDto>]
+        public static IEnumerable<User> SkipUser_Pre(IEnumerable<User> users) => users.Where(x => x.FirstName is not "skip pre");
 
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto_Arr>]
-public partial class CompanyDto_ArrMapper;
+        [PostMapQuery<User, UserDto>]
+        public static IEnumerable<UserDto> SkipUser_Post(IEnumerable<UserDto> users) => users.Where(x => x.FirstName is not "skip post");
+    }
 
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto_List>]
-public partial class CompanyDto_ListMapper;
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto_Arr>]
+    public partial class CompanyDto_ArrMapper;
 
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto_Collection>]
-public partial class CompanyDto_CollectionMapper;
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto_List>]
+    public partial class CompanyDto_ListMapper;
 
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto_ReadOnlyList>]
-public partial class CompanyDto_ReadOnlyListMapper;
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto_Collection>]
+    public partial class CompanyDto_CollectionMapper;
 
-[GenerateMapper]
-[UseMap<UserMapper, User, UserDto>]
-[Map<Company, CompanyDto_ReadOnlyCollection>]
-public partial class CompanyDto_ReadOnlyCollectionMapper;
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto_ReadOnlyList>]
+    public partial class CompanyDto_ReadOnlyListMapper;
 
-public class Company    { public IEnumerable<User> Users { get; set; } = [User.Jim(), User.Jim(), new () { FirstName = "skip pre", }, new () { FirstName = "skip post", },]; }
+    [GenerateMapper]
+    [UseMap<UserMapper, User, UserDto>]
+    [Map<Company, CompanyDto_ReadOnlyCollection>]
+    public partial class CompanyDto_ReadOnlyCollectionMapper;
 
-public class CompanyDto                    { public IEnumerable<UserDto>         Users { get; set; } = []; }
-public class CompanyDto_Arr                { public UserDto[]                    Users { get; set; } = []; }
-public class CompanyDto_List               { public List<UserDto>                Users { get; set; } = []; }
-public class CompanyDto_Collection         { public ICollection<UserDto>         Users { get; set; } = []; }
-public class CompanyDto_ReadOnlyList       { public IReadOnlyList<UserDto>       Users { get; set; } = []; }
-public class CompanyDto_ReadOnlyCollection { public IReadOnlyCollection<UserDto> Users { get; set; } = []; }
+    public class Company    { public IEnumerable<User> Users { get; set; } = [User.Jim(), User.Jim(), new () { FirstName = "skip pre", }, new () { FirstName = "skip post", },]; }
 
+    public class CompanyDto                    { public IEnumerable<UserDto>         Users { get; set; } = []; }
+    public class CompanyDto_Arr                { public UserDto[]                    Users { get; set; } = []; }
+    public class CompanyDto_List               { public List<UserDto>                Users { get; set; } = []; }
+    public class CompanyDto_Collection         { public ICollection<UserDto>         Users { get; set; } = []; }
+    public class CompanyDto_ReadOnlyList       { public IReadOnlyList<UserDto>       Users { get; set; } = []; }
+    public class CompanyDto_ReadOnlyCollection { public IReadOnlyCollection<UserDto> Users { get; set; } = []; }
 
-public class IEnumerableTests
-{
     [Theory]
     [InlineData(typeof(CompanyMapper),                       typeof(IEnumerable<UserDto>))]
     [InlineData(typeof(CompanyDto_ArrMapper),                typeof(UserDto[]))]

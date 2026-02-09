@@ -93,8 +93,11 @@ public class MapperGenerator : IIncrementalGenerator
             sb.AppendLine($"namespace {info.Namespace}");
             sb.AppendLine($"{{");
         }
-        sb.AppendLine($"    public partial class {info.MapperType.Name}");
-        sb.AppendLine($"    {{");
+        foreach (var classDec in info.ClassNests)
+        {
+            sb.AppendLine($"    public partial class {classDec}");
+            sb.AppendLine($"    {{");
+        }
         sb.AppendLine($"        [EditorBrowsable(EditorBrowsableState.Never)] // Does not work with ReSharper.");
         sb.AppendLine($"        public static partial class {info.DestinationType.Name}_Utils");
         sb.AppendLine($"        {{");
@@ -137,7 +140,10 @@ public class MapperGenerator : IIncrementalGenerator
         sb.AppendLine("                ctx.DecrementDepth();");
         sb.AppendLine("            }");
         sb.AppendLine("        }");
-        sb.AppendLine("    }");
+        foreach (var _ in info.ClassNests)
+        {
+            sb.AppendLine("    }");
+        }
         if (info.Namespace != string.Empty)
         {
             sb.AppendLine("}");
@@ -163,6 +169,11 @@ public class MapperGenerator : IIncrementalGenerator
          {
              mapMethodSb.AppendLine($"namespace {info.Namespace}");
              mapMethodSb.AppendLine($"{{");
+         }
+         foreach (var classDec in info.ClassNests.Take(info.ClassNests.Length - 1))
+         {
+             mapMethodSb.AppendLine($"    public partial class {classDec}");
+             mapMethodSb.AppendLine($"    {{");
          }
          mapMethodSb.AppendLine($"    public partial class {info.MapperType.Name} : IMapper<{info.SourceType.Name}, {info.DestinationType.Name}>");
          mapMethodSb.AppendLine("    {");
@@ -225,7 +236,10 @@ public class MapperGenerator : IIncrementalGenerator
         }
 
         mapMethodSb.AppendLine("        }");
-        mapMethodSb.AppendLine("    }");
+        foreach (var _ in info.ClassNests)
+        {
+            mapMethodSb.AppendLine("    }");
+        }
         if(info.Namespace != string.Empty)
             mapMethodSb.AppendLine("}");
 

@@ -3,34 +3,35 @@ using AotObjectMapper.Abstractions.Exceptions;
 
 namespace AotObjectMapper.Tests;
 
-public interface IAnimal    { public string Name { get; set; } }
-public interface IAnimalDto { public string Name { get; set; } }
-
-public class Dog    : IAnimal    { public string Name { get; set; } = String.Empty; }
-public class DogDto : IAnimalDto { public string Name { get; set; } = String.Empty; }
-
-public class Cat    : IAnimal    { public string Name { get; set; } = String.Empty; }
-public class CatDto : IAnimalDto { public string Name { get; set; } = String.Empty; }
-
-public class Bird    : IAnimal    { public string Name { get; set; } = String.Empty; }
-public class BirdDto : IAnimalDto { public string Name { get; set; } = String.Empty; }
-
-public class Wolf    : Dog    { public Color FurColor { get; set; } };
-public class WolfDto : DogDto { public Color FurColor { get; set; } };
-
-[GenerateMapper]
-[Map<IAnimal, IAnimalDto>]
-[Map<Dog, DogDto>]
-[Map<Cat, CatDto>]
-[UseMap<WolfMapper, Wolf, WolfDto>]
-public partial class AnimalMapper;
-
-[GenerateMapper]
-[Map<Wolf, WolfDto>]
-public partial class WolfMapper;
-
-public class PolymorphismTests
+public partial class PolymorphismTests
 {
+
+    public interface IAnimal    { public string Name { get; set; } }
+    public interface IAnimalDto { public string Name { get; set; } }
+
+    public class Dog    : IAnimal    { public string Name { get; set; } = String.Empty; }
+    public class DogDto : IAnimalDto { public string Name { get; set; } = String.Empty; }
+
+    public class Cat    : IAnimal    { public string Name { get; set; } = String.Empty; }
+    public class CatDto : IAnimalDto { public string Name { get; set; } = String.Empty; }
+
+    public class Bird    : IAnimal    { public string Name { get; set; } = String.Empty; }
+    public class BirdDto : IAnimalDto { public string Name { get; set; } = String.Empty; }
+
+    public class Wolf    : Dog    { public Color FurColor { get; set; } };
+    public class WolfDto : DogDto { public Color FurColor { get; set; } };
+
+    [GenerateMapper]
+    [Map<IAnimal, IAnimalDto>]
+    [Map<Dog, DogDto>]
+    [Map<Cat, CatDto>]
+    [UseMap<WolfMapper, Wolf, WolfDto>]
+    public partial class AnimalMapper;
+
+    [GenerateMapper]
+    [Map<Wolf, WolfDto>]
+    public partial class WolfMapper;
+
     [Fact]
     public void Map_IAnimal_Dog_Dispatches_To_DogDto()
     {
@@ -84,6 +85,6 @@ public class PolymorphismTests
 
         var ex = Should.Throw<UnhandledPolymorphicTypeException>(() => AnimalMapper.Map(source));
 
-        ex.Message.ShouldBe("Could not map type `AotObjectMapper.Tests.Bird` to `AotObjectMapper.Tests.IAnimalDto` - no matching destination type found.");
+        ex.Message.ShouldBe("Could not map type `AotObjectMapper.Tests.PolymorphismTests+Bird` to `AotObjectMapper.Tests.PolymorphismTests.IAnimalDto` - no matching destination type found.");
     }
 }

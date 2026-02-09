@@ -1,29 +1,28 @@
 ﻿using System;
 using System.Text.Json;
 
-public class Program()
+namespace Sample;
+
+public partial class Program()
 {
-    public static void Main(string[] args)
-    {
-        // Use this file to test and debug the generator by running the DebugRoslynSourceGenerator launch profile.
-
-        var dto = UserMapper.Map(User.Jim());
-
-        Console.WriteLine(JsonSerializer.Serialize(dto, new JsonSerializerOptions(){ WriteIndented = true }));
-    }
-}
-
-namespace AotObjectMapper.Sample
-{
+    // *******************************************************************************************************
+    // Use this file to test and debug the generator by running the DebugRoslynSourceGenerator launch profile.
+    // *******************************************************************************************************
 
     [GenerateMapper]
-    [Map<User, UserAltDto>]
-    public partial class UserMapper
-    {
-        [ForMember<User, UserAltDto>(nameof(UserAltDto.GivenName))]
-        private static string GetGivenName(User source) => source.FirstName;
+    [Map<User, UserDto>]
+    public partial class UserMapper;
 
-        [ForMember<User, UserAltDto>(nameof(UserAltDto.FamilyName))]
-        private static string GetFamilyName(User source) => source.LastName;
+    public static void Main(string[] args)
+    {
+        var src = User.Jim();
+
+        var dto = UserMapper.Map(src);
+
+        Console.WriteLine($"{src.GetType().Name}:");
+        Console.WriteLine(JsonSerializer.Serialize(src, new JsonSerializerOptions(){ WriteIndented = true }));
+        Console.WriteLine();
+        Console.WriteLine($"{dto.GetType().Name}:");
+        Console.WriteLine(JsonSerializer.Serialize(dto, new JsonSerializerOptions(){ WriteIndented = true }));
     }
 }

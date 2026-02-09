@@ -2,17 +2,17 @@
 
 namespace AotObjectMapper.Tests;
 
-[GenerateMapper(MappingOptions.AllowIConvertable)]
-[Map<User, UserStringDto>]
-[Map<UserStringDto, User>]
-public partial class UserIConvertableMapper
+public partial class IConvertableMapping
 {
-    [UseFormatProvider]
-    public static IFormatProvider Default => CultureInfo.InvariantCulture;
-}
+    [GenerateMapper(MappingOptions.AllowIConvertable)]
+    [Map<User, UserStringDto>]
+    [Map<UserStringDto, User>]
+    public partial class UserIConvertableMapper
+    {
+        [UseFormatProvider]
+        public static IFormatProvider Default => CultureInfo.InvariantCulture;
+    }
 
-public class IConvertableMapping
-{
     [Fact]
     public void MapUserToStringDto()
     {
