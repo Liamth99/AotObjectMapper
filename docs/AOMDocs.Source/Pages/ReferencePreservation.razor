@@ -2,9 +2,27 @@
 
 <PageTitle>Reference Preservation</PageTitle>
 
-<p>Circular references can cause infinite mapping loops. Enabling PreserveReferences prevents this and ensures the same object is not mapped multiple times.</p>
+<h1>Reference Preservation</h1>
+
+<p>Mapping objects with circular references can lead to infinite loops if each nested object is mapped independently.</p>
+
+<p><code>MappingOptions.PreserveReferences</code> ensures that:</p>
+
+<ul>
+    <li>Each source object is mapped exactly once per mapping operation</li>
+    <li>Subsequent references to the same object reuse the existing mapped instance</li>
+    <li>Circular references do not cause infinite recursion</li>
+</ul>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+<h2>How it works</h2>
+
+<ul>
+    <li>The <code>MapperContext</code> tracks all objects that have already been mapped</li>
+    <li>When a source object is encountered a second time, the previously mapped destination is reused</li>
+    <li>This guarantees object identity and prevents duplicate instances for the same source</li>
+</ul>
 
 @code
 {

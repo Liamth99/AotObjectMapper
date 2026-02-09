@@ -1,0 +1,151 @@
+﻿@page "/ExampleMapper"
+
+<PageTitle>Example Mapper</PageTitle>
+
+<h1>Example Mapper</h1>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+<CodeBlock Language="CodeLanguage.Json" EnableLineNumbers="false" Code=@Out />
+
+@code {
+
+    const string Code =
+"""
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using AotObjectMapper.Abstractions.Models;
+
+namespace MapperDemo
+{
+    // Sample domain classes
+    public class User
+    {
+        public Guid           Id          { get; set; }
+        public string         FirstName   { get; set; } = string.Empty;
+        public string         LastName    { get; set; } = string.Empty;
+        public DateTimeOffset DateOfBirth { get; set; }
+        public double         Age         => (DateTimeOffset.Now - DateOfBirth).TotalDays / 365.25;
+        public List<Address>  Addresses   { get; set; } = new();
+    }
+
+    public class UserDto
+    {
+        public Guid             Id          { get; set; }
+        public string           FullName    { get; set; } = string.Empty;
+        public int              YearOfBirth { get; set; }
+        public string           Age         { get; set; } = string.Empty;
+        public List<AddressDto> Addresses   { get; set; } = new();
+    }
+
+    public class Address
+    {
+        public string     Street    { get; set; } = string.Empty;
+        public string     City      { get; set; } = string.Empty;
+        public List<User> Occupants { get; set; } = [];
+    }
+
+    public class AddressDto
+    {
+        public string        Street    { get; set; } = string.Empty;
+        public string        City      { get; set; } = string.Empty;
+        public List<UserDto> Occupants { get; set; } = [];
+    }
+
+    // User Mapper
+    [GenerateMapper(options: MappingOptions.PreserveReferences | MappingOptions.AllowIConvertable)]
+    [Map<User, UserDto>]
+    [Map<Address, AddressDto>]
+    public partial class UserMapper
+    {
+        // Format provider when converting age properties
+        [UseFormatProvider]
+        public static IFormatProvider DefaultFormatProvider => CultureInfo.InvariantCulture;
+
+        // Manual member mapping
+        [ForMember<User, UserDto>(nameof(UserDto.FullName))]
+        public static string MapFullName(User source) => $"{source.FirstName} {source.LastName}";
+
+        [ForMember<User, UserDto>(nameof(UserDto.YearOfBirth))]
+        public static int MapYearOfBirth(User source) => source.DateOfBirth.Year;
+
+        // Pre-mapping hook
+        [PreMap<User, UserDto>]
+        public static void PreMap(User source)
+        {
+            Console.WriteLine($"Mapping user {source.FirstName} {source.LastName}...");
+        }
+
+        // Post-mapping hook
+        [PostMap<User, UserDto>]
+        public static void PostMap(UserDto dto)
+        {
+            Console.WriteLine($"Finished mapping {dto.FullName}.");
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Alice",
+                LastName = "Smith",
+                DateOfBirth = new DateTimeOffset(1990, 5, 12, 0, 0, 0, TimeSpan.Zero),
+                Addresses = [new Address { Street = "123 Main St", City = "Wonderland" }]
+            };
+
+            user.Addresses[0].Occupants.Add(user);
+
+            // Optional: create a MapperContext
+            var context = new MapperContext();
+
+            // Map user to DTO
+            var dto = UserMapper.Map(user, context);
+
+            Console.WriteLine();
+            Console.WriteLine(JsonSerializer.Serialize(dto, new JsonSerializerOptions(){ WriteIndented = true, ReferenceHandler = ReferenceHandler.Preserve, }));
+        }
+    }
+}
+
+""";
+
+    const string Out =
+"""
+Mapping user Alice Smith...
+Finished mapping Alice Smith.
+
+{
+  "$id": "1",
+  "Id": "c36d3069-1c4b-49f9-a71e-085578e7489f",
+  "FullName": "Alice Smith",
+  "YearOfBirth": 1990,
+  "Age": "35.74881802866251",
+  "Addresses": {
+    "$id": "2",
+    "$values": [
+      {
+        "$id": "3",
+        "Street": "123 Main St",
+        "City": "Wonderland",
+        "Occupants": {
+          "$id": "4",
+          "$values": [
+            {
+              "$ref": "1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+""";
+
+}

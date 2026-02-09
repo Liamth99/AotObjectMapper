@@ -2,10 +2,54 @@
 
 <PageTitle>Nested Mapping</PageTitle>
 
-<p>Nested objects can use other mappers via UseMap&lt;TMapGenerator, TSource, TDestination&gt;</p>
+<h1>Nested Mapping</h1>
+
+<p>Nested objects can be mapped in two main ways:</p>
+
+<ol>
+    <li>Separate mappers with <code>UseMap&lt;TMapper, TSource, TDestination&gt;</code></li>
+    <li>Single mapper handling multiple types with multiple <code>[Map]</code> attributes</li>
+</ol>
+
+<p>Both approaches are valid.</p>
+
+<h2>Option 1: Separate Mappers</h2>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
+<ul>
+    <li>Each mapper is responsible for a specific type</li>
+    <li>UseMap references allow reusing mappings between layers</li>
+    <li>Configurations are scoped to each mapper</li>
+</ul>
+
+<h2>Option 2: Single Mapper with Multiple <code>[Map]</code> Attributes</h2>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@AltCode />
+
+<ul>
+    <li>A single mapper handles all types in one place</li>
+    <li>Useful for smaller projects or when all mappings share the same configuration</li>
+    <li>Manual member mappings and ignored members can still be applied per mapping</li>
+</ul>
+
+<table>
+    <tr>
+        <th>Approach</th>
+        <th>Pros</th>
+        <th>Cons</th>
+    </tr>
+    <tr>
+        <td>Separate mappers</td>
+        <td>Modular, configuration isolation, easier to test</td>
+        <td>More classes to manage</td>
+    </tr>
+    <tr>
+        <td>Single mapper</td>
+        <td>Simple, all mappings in one place</td>
+        <td>Less flexibility, Mapper configuration applies to all</td>
+    </tr>
+</table>
 
 @code
 {
@@ -27,5 +71,15 @@ public partial class DepartmentMapper;
 [GenerateMapper]
 [Map<EmployeeEntity, EmployeeDto>]
 public partial class EmployeeMapper;
+""";
+
+    const string AltCode =
+"""
+// Layer 1, 2 & 3
+[GenerateMapper]
+[Map<CompanyEntity, CompanyDto>]
+[Map<DepartmentEntity, DepartmentDto>]
+[Map<EmployeeEntity, EmployeeDto>]
+public partial class CompanyMapper;
 """;
 }

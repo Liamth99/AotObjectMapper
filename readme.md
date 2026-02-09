@@ -78,4 +78,41 @@ Multiple Map attributes can be added to a single mapper class:
 [Map<User, UserDto>, Map<UserDto, User>]
 public partial class UserMapper;
 ```
+
+# Other Features 
+- Ignore Members
+   - Skip specific members in a mapping using `ignoredMembers` on `[Map]`.
+
+- IConvertible Member Mapping
+    - Automatically maps members implementing IConvertible with optional format providers (`[UseFormatProvider]`).
+
+- Mapper Context
+    - Optional MapperContext tracks depth, reference reuse, and additional data
+    - Supports nested mappings, reference preservation, and contextual operations
+
+- Manual Member Mapping
+   - Override mapping for specific members using `[ForMember<TSource, TDestination>]`. Supports `MapperContext`.
+
+- Enum Mapping
+  - Map by name (default)
+  - Map by value (`MappingOptions.MapEnumsByValue`)
+  - Throw exceptions for unmapped values (`MappingOptions.ThrowExceptionOnUnmappedEnum`)
+
+- Nested Object Mapping
+  - Use `[UseMap<TMapper, TSource, TDestination>]` to compose complex object graphs
+  - Optionally consolidate multiple `[Map]` into a single mapper
+  - Reference Preservation
+    - Prevent infinite loops for circular references using `MappingOptions.PreserveReferences`.
+    - Ensures the same source object is mapped once per operation.
+
+- Pre/Post Mapping Hooks
+  - Run logic before or after mapping with `[PreMap<TSource, TDestination>]` and `[PostMap<TSource, TDestination>]`.
+
+- Multiple Map Configurations
+  - Multiple `[Map]` attributes per mapper
+  - Separate mapper classes or single consolidated mapper for layered mapping
+
+- Customizable and Extensible
+  - Full control over conversions, member handling, and mapping behavior while maintaining compile-time safety.
+
 For more information visit the [Docs](https://liamth99.github.io/AotObjectMapper/)

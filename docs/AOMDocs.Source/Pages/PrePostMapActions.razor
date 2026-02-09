@@ -1,3 +1,48 @@
 ﻿@page "/PrePostMapActions"
 
-<PageTitle>Pre/Post Map Actions</PageTitle>
+<PageTitle>Pre and Post Mapping Hooks</PageTitle>
+
+<h1>Pre and Post Mapping Hooks</h1>
+
+<p>You can run custom logic before or after a mapping using <code>[PreMap&lt;TSource, TDestination&gt;]</code> and <code>[PostMap&lt;TSource, TDestination&gt;]</code>.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
+
+<ul>
+    <li>PreMap runs before the automatic mapping of members</li>
+    <li>PostMap runs after all automatic and manual member mappings have been applied</li>
+    <li>Methods must be static and can optionally accept a MapperContext</li>
+    <li>Method names are arbitrary, the hook is determined by the attribute</li>
+</ul>
+
+@code
+{
+    const string Code =
+"""
+[GenerateMapper]
+[Map<User, UserDto>]
+public partial class UserMapper
+{
+    [PreMap<User, UserDto>]
+    public static void PreMapAction_1(User source)
+    {
+        // Logic to execute before mapping
+        // e.g., validation, logging, modifying source
+    }
+
+    [PostMap<User, UserDto>(priority: 0)]
+    public static void PostMapAction(UserDto destination, MapperContext context)
+    {
+        // Logic to execute after mapping
+        // e.g., additional computation, enrichment
+    }
+
+    // Use Conditional attributes for extra flexibility
+    [Conditional("DEBUG"), PostMap<User, UserDto>(priority: int.MaxValue)]
+    public static void ValidateUser(UserDto user)
+    {
+        // Assert properties or run extra methods for validation
+    }
+}
+""";
+}

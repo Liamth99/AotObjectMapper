@@ -59,6 +59,30 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+table, th, td {
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 5px;
+}
+
+[data-bs-theme=light] table,
+[data-bs-theme=light] th,
+[data-bs-theme=light] td {
+    border: 1px solid black;
+}
+
+[data-bs-theme=dark] table,
+[data-bs-theme=dark] th,
+[data-bs-theme=dark] td {
+    border: 1px solid var(--bs-primary);
+}
+
+.token.operator {
+    background: #1E1E1E;
+}
+
 h1:focus {
     outline: none;
 }
