@@ -88,8 +88,11 @@ public class MapperGenerator : IIncrementalGenerator
         sb.AppendLine("");
         sb.AppendLine("#nullable enable");
         sb.AppendLine("");
-        sb.AppendLine($"namespace {info.Namespace}");
-        sb.AppendLine($"{{");
+        if(info.Namespace != string.Empty)
+        {
+            sb.AppendLine($"namespace {info.Namespace}");
+            sb.AppendLine($"{{");
+        }
         sb.AppendLine($"    public partial class {info.MapperType.Name}");
         sb.AppendLine($"    {{");
         sb.AppendLine($"        [EditorBrowsable(EditorBrowsableState.Never)] // Does not work with ReSharper.");
@@ -135,8 +138,10 @@ public class MapperGenerator : IIncrementalGenerator
         sb.AppendLine("            }");
         sb.AppendLine("        }");
         sb.AppendLine("    }");
-        sb.AppendLine("}");
-
+        if (info.Namespace != string.Empty)
+        {
+            sb.AppendLine("}");
+        }
         return sb.ToString();
     }
 
@@ -154,8 +159,11 @@ public class MapperGenerator : IIncrementalGenerator
          mapMethodSb.AppendLine();
          mapMethodSb.AppendLine("#nullable enable");
          mapMethodSb.AppendLine();
-         mapMethodSb.AppendLine($"namespace {info.Namespace}");
-         mapMethodSb.AppendLine("{");
+         if(info.Namespace != string.Empty)
+         {
+             mapMethodSb.AppendLine($"namespace {info.Namespace}");
+             mapMethodSb.AppendLine($"{{");
+         }
          mapMethodSb.AppendLine($"    public partial class {info.MapperType.Name} : IMapper<{info.SourceType.Name}, {info.DestinationType.Name}>");
          mapMethodSb.AppendLine("    {");
          mapMethodSb.AppendLine("        [Pure]");
@@ -218,7 +226,8 @@ public class MapperGenerator : IIncrementalGenerator
 
         mapMethodSb.AppendLine("        }");
         mapMethodSb.AppendLine("    }");
-        mapMethodSb.AppendLine("}");
+        if(info.Namespace != string.Empty)
+            mapMethodSb.AppendLine("}");
 
         return mapMethodSb.ToString();
     }

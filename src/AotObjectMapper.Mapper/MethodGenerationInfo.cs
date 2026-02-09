@@ -75,7 +75,7 @@ public sealed class MethodGenerationInfo
         MapperType      = (INamedTypeSymbol)mapperType;
         SourceType      = (INamedTypeSymbol)sourceType;
         DestinationType = (INamedTypeSymbol)destinationType;
-        Namespace       = MapperType.ContainingNamespace.ToDisplayString();
+        Namespace       = MapperType.ContainingNamespace.ToDisplayString() == "<global namespace>" ? string.Empty : MapperType.ContainingNamespace.ToDisplayString();
         Maps            = MapperType.GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(MapAttribute<,>)).ToArray();
         OtherMappers    = MapperType.GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(UseMapAttribute<,,>)).ToArray();
 
