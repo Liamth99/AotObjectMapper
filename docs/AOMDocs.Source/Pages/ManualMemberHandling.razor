@@ -2,17 +2,33 @@
 
 <PageTitle>Manual Member Handling</PageTitle>
 
-<p>To map between members that differ (such as the date-of-birth fields), use ForMember&lt;TSource, TDestination&gt; to specify custom conversion methods.</p>
+<h1>Manual Member Handling</h1>
+
+<p>Automatic mapping is based on matching names and compatible types. When source and destination members differ, manual mapping is required using <code>ForMember&lt;TSource, TDestination&gt;</code>.</p>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@Code />
 
-<p>Methods must take the source type as the first parameter and may optionally accept a MapperContext as the second.</p>
+<h2>Method Signature Rules</h2>
 
+<p>Manual mapping methods must:</p>
+
+<ul>
+    <li>Be static</li>
+    <li>Take the source type as the first parameter</li>
+    <li>Optionally accept a MapperContext as the second parameter</li>
+    <li>Return the value to assign to the destination member</li>
+</ul>
+
+<h2>Using MapperContext</h2>
+
+<p>When present, the <code>MapperContext</code> parameter is automatically passed from generated mapping code. Use the context for additional state or external data access.</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@ContextExample />
 @code
 {
     const string Code =
 """
-[GenerateMapper(options: MappingOptions.SuppressNullWarnings)]
+[GenerateMapper]
 [Map<User, UserDto>]
 [Map<UserDto, User>]
 public partial class UserMapper
@@ -29,9 +45,19 @@ public partial class UserMapper
     [ForMember<User, UserDto>(nameof(UserDto.TimeOfBirth))]
     public static TimeOnly GetTimeOfBirth(User source) => new (source.DateOfBirth.UtcDateTime.TimeOfDay.Ticks);
 
-    [ForMember<UserDto, User>(mapMethodName: nameof(RevertMap), memberName: nameof(User.DateOfBirth))]
-    public static DateTimeOffset GetDateOfBirth(UserDto source, MapperContext context)
+    [ForMember<UserDto, User>(nameof(User.DateOfBirth))]
+    public static DateTimeOffset GetDateOfBirth(UserDto source)
         => new DateTimeOffset(new DateOnly(source.YearOfBirth, source.MonthOfBirth, source.DayOfBirth), source.TimeOfBirth, TimeSpan.Zero);
+}
+""";
+
+    const string ContextExample =
+"""
+[ForMember<User, UserDto>(nameof(UserDto.FirstName))]
+public static string MapName(User source, MapperContext context)
+{
+    var extra = context.AdditionalContext["ExtraMetadata"];
+    return $"{source.FirstName} {extra}";
 }
 """;
 }
