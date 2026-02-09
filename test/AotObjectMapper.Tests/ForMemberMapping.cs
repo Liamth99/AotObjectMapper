@@ -1,27 +1,28 @@
 ﻿namespace AotObjectMapper.Tests;
 
-[GenerateMapper]
-[Map<User, UserAltDto>]
-[Map<UserAltDto, User>]
-public partial class UserForMemberMapper
+public partial class ForMemberMapping
 {
-    // DTO -> User
-    [ForMember<UserAltDto, User>(nameof(User.FirstName))]
-    private static string GetFirstName(UserAltDto source) => source.GivenName;
 
-    [ForMember<UserAltDto, User>(nameof(User.LastName))]
-    private static string GetLastName(UserAltDto source) => source.FamilyName;
+    [GenerateMapper]
+    [Map<User, UserAltDto>]
+    [Map<UserAltDto, User>]
+    public partial class UserForMemberMapper
+    {
+        // DTO -> User
+        [ForMember<UserAltDto, User>(nameof(User.FirstName))]
+        private static string GetFirstName(UserAltDto source) => source.GivenName;
 
-    // User -> DTO
-    [ForMember<User, UserAltDto>(nameof(UserAltDto.GivenName))]
-    private static string GetGivenName(User source) => source.FirstName;
+        [ForMember<UserAltDto, User>(nameof(User.LastName))]
+        private static string GetLastName(UserAltDto source) => source.FamilyName;
 
-    [ForMember<User, UserAltDto>(nameof(UserAltDto.FamilyName))]
-    private static string GetFamilyName(User source) => source.LastName;
-}
+        // User -> DTO
+        [ForMember<User, UserAltDto>(nameof(UserAltDto.GivenName))]
+        private static string GetGivenName(User source) => source.FirstName;
 
-public class ForMemberMapping
-{
+        [ForMember<User, UserAltDto>(nameof(UserAltDto.FamilyName))]
+        private static string GetFamilyName(User source) => source.LastName;
+    }
+
     [Fact]
     public void MapUserToAltDto()
     {

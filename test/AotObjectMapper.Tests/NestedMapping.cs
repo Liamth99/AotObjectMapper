@@ -1,32 +1,31 @@
 ﻿namespace AotObjectMapper.Tests;
 
-[GenerateMapper(MappingOptions.PreserveReferences)]
-[Map<Order, OrderDto>]
-[Map<OrderDto, Order>]
-[UseMap<CustomerMapper, Customer, CustomerDto>]
-[UseMap<CustomerMapper, CustomerDto, Customer>]
-public partial class OrderMapper;
-
-[GenerateMapper(MappingOptions.PreserveReferences)]
-[Map<Customer, CustomerDto>]
-[Map<CustomerDto, Customer>]
-public partial class CustomerMapper;
-
-[GenerateMapper]
-[Map<Order, OrderDto>]
-[Map<OrderDto, Order>]
-[UseMap<CustomerMapperNoRefPreservation, Customer, CustomerDto>]
-[UseMap<CustomerMapperNoRefPreservation, CustomerDto, Customer>]
-public partial class OrderMapperNoRefPreservation;
-
-[GenerateMapper]
-[Map<Customer, CustomerDto>]
-[Map<CustomerDto, Customer>]
-public partial class CustomerMapperNoRefPreservation;
-
-
-public class NestedMapping
+public partial class NestedMapping
 {
+    [GenerateMapper(MappingOptions.PreserveReferences)]
+    [Map<Order, OrderDto>]
+    [Map<OrderDto, Order>]
+    [UseMap<CustomerMapper, Customer, CustomerDto>]
+    [UseMap<CustomerMapper, CustomerDto, Customer>]
+    public partial class OrderMapper;
+
+    [GenerateMapper(MappingOptions.PreserveReferences)]
+    [Map<Customer, CustomerDto>]
+    [Map<CustomerDto, Customer>]
+    public partial class CustomerMapper;
+
+    [GenerateMapper]
+    [Map<Order, OrderDto>]
+    [Map<OrderDto, Order>]
+    [UseMap<CustomerMapperNoRefPreservation, Customer, CustomerDto>]
+    [UseMap<CustomerMapperNoRefPreservation, CustomerDto, Customer>]
+    public partial class OrderMapperNoRefPreservation;
+
+    [GenerateMapper]
+    [Map<Customer, CustomerDto>]
+    [Map<CustomerDto, Customer>]
+    public partial class CustomerMapperNoRefPreservation;
+
     [Fact]
     public void MapOrderToDto()
     {
