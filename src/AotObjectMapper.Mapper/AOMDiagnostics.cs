@@ -84,7 +84,16 @@ public static class AOMDiagnostics
         messageFormat: "`{0}` does not require MapperContext. Remove the parameter to avoid unnecessary overhead.",
         category: DiagnosticCategories.Performance, 
         defaultSeverity: DiagnosticSeverity.Warning, 
-        isEnabledByDefault: true); 
+        isEnabledByDefault: true);
+
+    public const string MethodHasIncorrectSignatureNotStaticId = "AOM104";
+    public static readonly DiagnosticDescriptor AOM104_MethodHasIncorrectSignatureNotStatic = new (
+        id: MethodHasIncorrectSignatureNotStaticId,
+        title: "Method must be static",
+        messageFormat: "`{0}` must be static",
+        category: DiagnosticCategories.Usage,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 
     
     // Invalid Mapper Configuration
