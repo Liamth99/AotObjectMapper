@@ -7,8 +7,6 @@ namespace MappingBenchmarks;
 
 public partial class ComplexBenchmark
 {
-    const string[] str = [];
-
     [GenerateMapper(MappingOptions.PreserveReferences)]
     [Map<Person, PersonDto>]
     [Map<Company, CompanyDto>]
