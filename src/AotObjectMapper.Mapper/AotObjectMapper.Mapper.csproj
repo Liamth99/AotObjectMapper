@@ -51,5 +51,10 @@
         <None Include="../../readme.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+      <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+    </ItemGroup>
+
 
 </Project>
