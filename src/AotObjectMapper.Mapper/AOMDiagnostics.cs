@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
@@ -12,7 +11,7 @@ namespace AotObjectMapper.Mapper;
 public static class AOMDiagnostics
 {
 
-    public static ImmutableArray<DiagnosticDescriptor> diagnosticDescriptors()
+    public static ImmutableArray<DiagnosticDescriptor> DiagnosticDescriptors()
     {
         return [..typeof(AOMDiagnostics)
                  .GetFields(BindingFlags.Static | BindingFlags.Public)
@@ -40,7 +39,7 @@ public static class AOMDiagnostics
     public static readonly DiagnosticDescriptor AOM000_UnhandledExceptionId = new (
         id: UnhandledExceptionId, 
         title: "Unhandled exception while generating mapper",
-        messageFormat: "Unhandled exception while generating {0}",  // TODO: Figure out message format
+        messageFormat: "Unhandled exception while generating `{0}`. {1}.",
         category: DiagnosticCategories.Internal, 
         defaultSeverity: DiagnosticSeverity.Error, 
         isEnabledByDefault: true, 
@@ -206,7 +205,7 @@ public static class AOMDiagnostics
     public const string RequiredMemberNotMappedId = "AOM302";
     public static readonly DiagnosticDescriptor AOM302_RequiredMemberNotMapped = new (
         id: RequiredMemberNotMappedId, 
-        title: "Nullable assignment to non-nullable property",
+        title: "Required member not mapped",
         messageFormat: "Required member `{0}` on `{1}` should be mapped",
         category: DiagnosticCategories.TypeSafety, 
         defaultSeverity: DiagnosticSeverity.Warning, 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -56,19 +57,29 @@ public class MapperGenerator : IIncrementalGenerator
 
             foreach (var mapAttr in mapAttributes)
             {
-                var sourceType      = mapAttr.AttributeClass!.TypeArguments[0];
-                var destinationType = mapAttr.AttributeClass!.TypeArguments[1];
-
-                var info = new MethodGenerationInfo((INamedTypeSymbol)mapper, sourceType, destinationType);
-
-                if (info.DestinationType.TypeKind is not TypeKind.Interface || !info.DestinationType.IsAbstract)
+                try
                 {
-                    var populateCode = GeneratePopulationMethod(compilation, info);
-                    context.AddSource($"Populate_{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
-                }
+                    var sourceType      = mapAttr.AttributeClass!.TypeArguments[0];
+                    var destinationType = mapAttr.AttributeClass!.TypeArguments[1];
 
-                var code = GenerateMapperMethod(compilation, info);
-                context.AddSource($"{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(code, Encoding.UTF8));
+                    var info = new MethodGenerationInfo((INamedTypeSymbol)mapper, sourceType, destinationType);
+
+                    if (info.DestinationType.TypeKind is not TypeKind.Interface || !info.DestinationType.IsAbstract)
+                    {
+                        var populateCode = GeneratePopulationMethod(compilation, info);
+                        context.AddSource($"Populate_{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
+                    }
+
+                    var code = GenerateMapperMethod(compilation, info);
+                    context.AddSource($"{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(code, Encoding.UTF8));
+                }
+                catch (Exception ex)
+                {
+                    foreach (Location location in mapper.Locations)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM000_UnhandledExceptionId, location, mapper.ToDisplayString(), ex));
+                    }
+                }
             }
         }
     }
