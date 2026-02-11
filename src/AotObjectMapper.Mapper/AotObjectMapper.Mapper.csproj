@@ -5,6 +5,8 @@
         <IsPackable>true</IsPackable>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
+        
+        <WarningsAsErrors>RS2007;RS2000</WarningsAsErrors>
 
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>true</IsRoslynComponent>
@@ -49,6 +51,11 @@
     <ItemGroup>
         <None Include="../../docs/static/icon128.png" Pack="true" PackagePath="\"/>
         <None Include="../../readme.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+      <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     </ItemGroup>
 
 

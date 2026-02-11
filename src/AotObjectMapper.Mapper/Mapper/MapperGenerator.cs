@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -50,25 +51,42 @@ public class MapperGenerator : IIncrementalGenerator
             if (mapper is null)
                 continue;
 
-            var attributes = mapper.GetAttributes();
-
-            var mapAttributes = attributes.Where(a => a.AttributeClass?.Name == nameof(MapAttribute<,>));
-
-            foreach (var mapAttr in mapAttributes)
+            try
             {
-                var sourceType      = mapAttr.AttributeClass!.TypeArguments[0];
-                var destinationType = mapAttr.AttributeClass!.TypeArguments[1];
+                var attributes = mapper.GetAttributes();
 
-                var info = new MethodGenerationInfo((INamedTypeSymbol)mapper, sourceType, destinationType);
+                var mapAttributes = attributes.Where(a => a.AttributeClass?.Name == nameof(MapAttribute<,>));
 
-                if (info.DestinationType.TypeKind is not TypeKind.Interface || !info.DestinationType.IsAbstract)
+                foreach (var mapAttr in mapAttributes)
                 {
-                    var populateCode = GeneratePopulationMethod(compilation, info);
-                    context.AddSource($"Populate_{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
-                }
+                    try
+                    {
+                        var sourceType      = mapAttr.AttributeClass!.TypeArguments[0];
+                        var destinationType = mapAttr.AttributeClass!.TypeArguments[1];
 
-                var code = GenerateMapperMethod(compilation, info);
-                context.AddSource($"{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(code, Encoding.UTF8));
+                        var info = new MethodGenerationInfo((INamedTypeSymbol)mapper, sourceType, destinationType);
+
+                        if (info.DestinationType.TypeKind is not TypeKind.Interface || !info.DestinationType.IsAbstract)
+                        {
+                            var populateCode = GeneratePopulationMethod(compilation, info);
+                            context.AddSource($"Populate_{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(populateCode, Encoding.UTF8));
+                        }
+
+                        var code = GenerateMapperMethod(compilation, info);
+                        context.AddSource($"{mapper.Name}_{sourceType.Name}_To_{destinationType.Name}.g.cs", SourceText.From(code, Encoding.UTF8));
+                    }
+                    catch (Exception ex)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM000_UnhandledExceptionId, mapAttr.ApplicationSyntaxReference?.GetSyntax().GetLocation(), mapper.ToDisplayString(), ex));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                foreach (Location location in mapper.Locations)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM000_UnhandledExceptionId, location, mapper.ToDisplayString(), ex));
+                }
             }
         }
     }
