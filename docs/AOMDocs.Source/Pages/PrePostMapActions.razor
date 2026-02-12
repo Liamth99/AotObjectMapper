@@ -24,7 +24,7 @@
 public partial class UserMapper
 {
     [PreMap<User, UserDto>]
-    public static void PreMapAction(User source)
+    public static void PreMapAction(User source, UserDto destination)
     {
         // Logic to execute before mapping
         // e.g., validation, logging, modifying source
