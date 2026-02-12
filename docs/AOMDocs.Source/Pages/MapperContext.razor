@@ -4,7 +4,7 @@
 
 <h1>Mapper Context</h1>
 
-<p>Some mapping scenarios require a shared state during the mapping process.</p>
+<p>Some mapping scenarios require shared state during the mapping process.</p>
 
 <p><code>MapperContext</code> provides this state and allows mappings to coordinate behavior across nested mapping operations.</p>
 
@@ -15,23 +15,40 @@
 <p><code>MapperContext</code> is used to:</p>
 
 <ul>
-    <li>Tracking and optionally enforcing mapping depth</li>
-    <li>Preserve object references during mapping (<a href="ReferencePreservation">Opt in only</a>)</li>
+    <li>Track and optionally enforce mapping depth</li>
+    <li>Preserve object references during mapping (<a href="ReferencePreservation">opt-in only</a>)</li>
+    <li>Expose additional user-defined context data</li>
 </ul>
 
-<p>The context is passed through all generated mapping methods that participate in a single mapping operation.</p>
+<p>The context is passed through all generated mapping methods that participate in a single logical mapping operation.</p>
 
-<h2>Lifetime and Scope</h2>
+<h2>Thread Safety</h2>
 
-<p>A <code>MapperContext</code> instance represents a single logical mapping operation.</p>
+<p><code>MapperContext</code> is <strong>not thread-safe</strong>.</p>
 
-<ul>
-    <li>It is created by the caller or implicitly by the generated mapper</li>
-    <li>It is shared across all nested mapping calls</li>
-    <li>It is not static or global</li>
-</ul>
+<p>A context instance is intended to be used for a single logical mapping operation and should not be shared across concurrent mappings.</p>
 
-<p>Contexts should <strong>NOT</strong> be reused across unrelated mapping operations.</p>
+<p>If thread-safe behavior is required, use <code>ConcurrentMapperContext</code>.</p>
+
+<p>Even when using <code>ConcurrentMapperContext</code>, it is recommended to create a new context per mapping operation. Contexts represent execution scope and should not be reused across unrelated mappings.</p>
+
+<h2>Sharing Additional Context Data</h2>
+
+<p>If you need to share additional data across multiple mapping operations, provide a shared dictionary when constructing the context:</p>
+
+<CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@SharedData />
+
+<p>If concurrent access is required, supply a <code>ConcurrentDictionary</code>.</p>
+
+<p>This allows shared state without reusing the same context instance.</p>
+
+<h2>Mapping Depth</h2>
+
+<p>The context can optionally enforce a maximum mapping depth to prevent excessive recursion or circular object graphs.</p>
+
+<p>Depth is tracked per logical mapping operation and reflects nested object mappings within that operation.</p>
+
+<p>If the configured maximum depth is exceeded, a <code>MaxMapDepthException</code> is thrown.</p>
 
 <h2>Additional Context Data</h2>
 
@@ -39,11 +56,18 @@
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@AddData />
 
-<p>This data can be accessed from manual mapping configuration such as manual member mapping, map queries, pre/post map actions ect.</p>
+<p>This data can be accessed from manual mapping configuration such as:</p>
+
+<ul>
+    <li>Manual member mapping</li>
+    <li>Map queries</li>
+    <li>Pre-map and post-map actions</li>
+    <li>Object factories</li>
+</ul>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@UseData />
 
-<p>This allows external data to participate in the mapping process without relying on global state.</p>
+<p>This allows external data to participate in the mapping process without relying on global state and remaining static.</p>
 
 @code
 {
@@ -51,19 +75,32 @@
 """
 var context = new MapperContext(maxDepth: 50);
 
-context.AdditionalContext.Add("ExtraMetadata", ....);
+context.AdditionalContext["ExtraMetadata"] = ...;
 
 var dto = UserMapper.Map(user, context);
 """;
 
+    const string SharedData =
+"""
+// Existing shared data
+ConcurrentDictionary sharedData = new ConcurrentDictionary<string, object>();
+
+public void MapUser()
+{
+    var context = new ConcurrentMapperContext(sharedData);
+
+    var dto = UserMapper.Map(user, context);
+}
+""";
+
     const string AddData =
 """
-context.AdditionalContext.Add("CorrelationId", correlationId);
+context.AdditionalContext["CorrelationId"] = correlationId;
 """;
 
     const string UseData =
 """
-public static string MapName(Source source, MapperContext context)
+public static string MapName(Source source, MapperContextBase context)
 {
     var id = context.AdditionalContext["CorrelationId"];
     ...

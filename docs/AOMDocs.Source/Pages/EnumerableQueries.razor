@@ -74,7 +74,7 @@
 public partial class CompanyMapper_FilterInactiveUsers
 {
     [PreMapQuery<User, UserDto>]
-    public static IEnumerable<User> FilterInactiveUsers(IEnumerable<User> users, MapperContext ctx)
+    public static IEnumerable<User> FilterInactiveUsers(IEnumerable<User> users, MapperContextBase ctx)
     {
         if (!ctx.AdditionalContext.TryGetValue("IncludeInactiveUsers", out var value) ||
             value is not bool includeInactive ||
@@ -96,7 +96,7 @@ public partial class CompanyMapper_FilterInactiveUsers
 public partial class CompanyMapper_LimitResults
 {
     [PostMapQuery<User, UserDto>]
-    public static IEnumerable<UserDto> LimitResults(IEnumerable<UserDto> users, MapperContext ctx)
+    public static IEnumerable<UserDto> LimitResults(IEnumerable<UserDto> users, MapperContextBase ctx)
     {
         if (!ctx.AdditionalContext.TryGetValue("MaxUsers", out var value) ||
             value is not int maxUsers)
@@ -117,7 +117,7 @@ public partial class CompanyMapper_LimitResults
 public partial class CompanyMapper_PolicyDriven
 {
     [PreMapQuery<User, UserDto>]
-    public static IEnumerable<User> FilterInactiveUsers(IEnumerable<User> users, MapperContext ctx)
+    public static IEnumerable<User> FilterInactiveUsers(IEnumerable<User> users, MapperContextBase ctx)
     {
         if (ctx.AdditionalContext.TryGetValue("IncludeInactiveUsers", out var value) &&
             value is bool includeInactive &&
@@ -130,7 +130,7 @@ public partial class CompanyMapper_PolicyDriven
     }
 
     [PostMapQuery<User, UserDto>]
-    public static IEnumerable<UserDto> LimitResults(IEnumerable<UserDto> users, MapperContext ctx)
+    public static IEnumerable<UserDto> LimitResults(IEnumerable<UserDto> users, MapperContextBase ctx)
     {
         if (ctx.AdditionalContext.TryGetValue("MaxUsers", out var value) &&
             value is int maxUsers)
