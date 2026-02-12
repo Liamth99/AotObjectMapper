@@ -128,7 +128,7 @@ public class MapperGenerator : IIncrementalGenerator
         foreach (var premapMethod in info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
         {
             sb.AppendLine();
-            sb.AppendLine($"                 {premapMethod.Method.Name}(src{(premapMethod.Method.Parameters.Length is 3 ? ", ctx" : "")});");
+            sb.AppendLine($"                 {premapMethod.Method.Name}(src, dest{(premapMethod.Method.Parameters.Length is 3 ? ", ctx" : "")});");
         }
 
         var propertiesToAsssign = propertyAssignments.Where(x => x.assignemnt is not ("null!" or "null" or "default!" or "default")).ToArray();
