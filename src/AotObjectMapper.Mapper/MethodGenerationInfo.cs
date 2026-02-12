@@ -198,7 +198,7 @@ public sealed class MethodGenerationInfo
 
         var format = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
 
-        Usings = ["System", "System.Collections.Generic", "System.Linq", "System.ComponentModel", "System.Diagnostics.Contracts", "AotObjectMapper.Abstractions.Models", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
+        Usings = ["System", "System.Collections.Generic", "System.Linq", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
 
         SourceProperties = sourceType.GetAllReadableProperties().ToArray();
 
