@@ -27,15 +27,9 @@ public sealed class MethodGenerationInfo
     /// based on their runtime or compile-time polymorphism relationships.
     public Dictionary<ITypeSymbol, List<ITypeSymbol>> PolymorphableTypes { get; }
 
+    public AttributeData MapAttribute;
 
-    /// Represents the namespace where the generated mapper code will be placed.
-    public string Namespace  { get;  }
-
-    public string[] ClassNests { get; }
-
-    /// A collection of namespaces that will be included as `using` directives in the generated mapper class.
-    public List<string> Usings { get;  }
-
+    /// An array of attribute data representing mapping-related attributes applied to the method, utilized during the code generation process.
     public AttributeData[] Maps { get; }
 
     /// A collection of attribute data representing additional mappers needed for nested or complex mapping scenarios.
@@ -78,15 +72,14 @@ public sealed class MethodGenerationInfo
     public bool ThrowExceptionOnUnmappedEnum {get; }
 
 
-    public MethodGenerationInfo(ITypeSymbol mapperType, ITypeSymbol sourceType, ITypeSymbol destinationType)
+    public MethodGenerationInfo(ITypeSymbol mapperType, AttributeData mapAttr)
     {
         MapperType      = (INamedTypeSymbol)mapperType;
-        SourceType      = (INamedTypeSymbol)sourceType;
-        DestinationType = (INamedTypeSymbol)destinationType;
-        Namespace       = MapperType.ContainingNamespace.ToDisplayString() == "<global namespace>" ? string.Empty : MapperType.ContainingNamespace.ToDisplayString();
+        SourceType      = (INamedTypeSymbol)mapAttr.AttributeClass!.TypeArguments[0];
+        DestinationType = (INamedTypeSymbol)mapAttr.AttributeClass!.TypeArguments[1];
+        MapAttribute    = mapAttr;
         Maps            = MapperType.GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(MapAttribute<,>)).ToArray();
         OtherMappers    = MapperType.GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(UseMapAttribute<,,>)).ToArray();
-        ClassNests      = new string(mapperType.OriginalDefinition.ToString().Skip(Namespace.Length).ToArray()).Split(['.'], StringSplitOptions.RemoveEmptyEntries).ToArray();
 
         AllMaps = Maps.Concat(OtherMappers.SelectMany(x => x.AttributeClass!.TypeArguments[0].GetAttributes().Where(attr => attr.AttributeClass?.Name == nameof(MapAttribute<,>)))).ToArray();
 
@@ -104,8 +97,8 @@ public sealed class MethodGenerationInfo
                               .GetAttributes()
                               .Single(x =>
                                           x.AttributeClass!.Name == nameof(MapAttribute<,>) &&
-                                          x.AttributeClass.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default) &&
-                                          x.AttributeClass.TypeArguments[1].Equals(destinationType, SymbolEqualityComparer.Default)
+                                          x.AttributeClass.TypeArguments[0].Equals(SourceType, SymbolEqualityComparer.Default) &&
+                                          x.AttributeClass.TypeArguments[1].Equals(DestinationType, SymbolEqualityComparer.Default)
                                );
 
         UserDefinedMapperMethods = MapperType.GetMembers().OfType<IMethodSymbol>().ToArray();
@@ -196,11 +189,7 @@ public sealed class MethodGenerationInfo
         MapEnumsByValue              = (mappingOptions & 8U)  > 0;
         ThrowExceptionOnUnmappedEnum = (mappingOptions & 16U) > 0;
 
-        var format = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
-
-        Usings = ["System", "System.Collections.Generic", "System.Linq", SourceType.ContainingNamespace!.ToDisplayString(format), destinationType.ContainingNamespace!.ToDisplayString(format)];
-
-        SourceProperties = sourceType.GetAllReadableProperties().ToArray();
+        SourceProperties = SourceType.GetAllReadableProperties().ToArray();
 
         DestinationProperties = DestinationType.GetAllReadableProperties().ToDictionary(p => p.Name);
 
@@ -283,7 +272,7 @@ public sealed class MethodGenerationInfo
             if (PreserveReferences)
             {
                 var ctor = otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor(this, out var ctorArgs);
-                assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)";
+                assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.Utils.Populate)";
             }
             else
             {
@@ -303,7 +292,7 @@ public sealed class MethodGenerationInfo
             if (PreserveReferences)
             {
                 var ctor = method.destination.BlankTypeConstructor(this, out var ctorArgs);
-                assignmentExpression = $"ctx.GetOrMapObject<{method.source.ToDisplayString()}, {method.destination.ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {MapperType.ToDisplayString()}.{method.destination.Name}_Utils.Populate)";
+                assignmentExpression = $"ctx.GetOrMapObject<{method.source.ToDisplayString()}, {method.destination.ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {MapperType.ToDisplayString()}.Utils.Populate)";
             }
             else
             {
