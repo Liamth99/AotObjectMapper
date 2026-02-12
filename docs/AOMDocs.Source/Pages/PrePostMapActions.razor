@@ -11,7 +11,7 @@
 <ul>
     <li><code>PreMap</code> runs before the automatic mapping of members</li>
     <li><code>PostMap</code> runs after all automatic and manual member mappings have been applied</li>
-    <li>Methods must be static and can optionally accept a <code>MapperContext</code></li>
+    <li>Methods must be static and can optionally accept a <code>MapperContextBase</code></li>
     <li>Method names are arbitrary, the hook is determined by the attribute</li>
 </ul>
 
@@ -31,7 +31,7 @@ public partial class UserMapper
     }
 
     [PostMap<User, UserDto>(priority: 0)]
-    public static void PostMapAction(UserDto destination, MapperContext context)
+    public static void PostMapAction(UserDto destination, MapperContextBase context)
     {
         // Logic to execute after mapping
         // e.g., additional computation, enrichment

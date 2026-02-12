@@ -72,7 +72,7 @@ public static class AOMDiagnostics
     public static readonly DiagnosticDescriptor AOM102_MethodHasIncorrectSignatureMapperContext = new (
         id: MethodHasIncorrectSignatureMapperContextId, 
         title: "Method has incorrect MapperContext parameter type",
-        messageFormat: "Second parameter for `{0}` should either be removed or be of type `MapperContext`",
+        messageFormat: "Second parameter for `{0}` should either be removed or be of type `MapperContextBase`",
         category: DiagnosticCategories.Usage, 
         defaultSeverity: DiagnosticSeverity.Error, 
         isEnabledByDefault: true); 
@@ -80,8 +80,8 @@ public static class AOMDiagnostics
     public const string MethodDoesNotRequireContextId = "AOM103";
     public static readonly DiagnosticDescriptor AOM103_MethodDoesNotRequireContext = new (
         id: MethodDoesNotRequireContextId, 
-        title: "Method does not require MapperContext and the parameter should be removed",
-        messageFormat: "`{0}` does not require MapperContext. Remove the parameter to avoid unnecessary overhead.",
+        title: "Method does not require MapperContextBase and the parameter should be removed",
+        messageFormat: "`{0}` does not require MapperContextBase. Remove the parameter to avoid unnecessary overhead.",
         category: DiagnosticCategories.Performance, 
         defaultSeverity: DiagnosticSeverity.Warning, 
         isEnabledByDefault: true);

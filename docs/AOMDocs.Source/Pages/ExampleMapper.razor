@@ -76,7 +76,7 @@ namespace MapperDemo
 
         // Pre-mapping hook
         [PreMap<User, UserDto>]
-        public static void PreMap(User source)
+        public static void PreMap(User source, UserDto _)
         {
             Console.WriteLine($"Mapping user {source.FirstName} {source.LastName}...");
         }

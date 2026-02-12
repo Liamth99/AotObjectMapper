@@ -121,7 +121,7 @@ public class MapperGenerator : IIncrementalGenerator
         sb.AppendLine($"        {{");
         sb.AppendLine($"            /// Populates an existing object, Designed for internal use.");
         sb.AppendLine($"            [EditorBrowsable(EditorBrowsableState.Never)] // Does not work with ReSharper.");
-        sb.AppendLine($"            public static void Populate({info.DestinationType.ToDisplayString()} dest, {info.SourceType.ToDisplayString()} src, MapperContext ctx)");
+        sb.AppendLine($"            public static void Populate({info.DestinationType.ToDisplayString()} dest, {info.SourceType.ToDisplayString()} src, MapperContextBase ctx)");
         sb.AppendLine($"            {{");
         sb.AppendLine($"                 // Pre Map Actions");
         sb.AppendLine($"                 ctx.IncrementDepth();");
@@ -197,7 +197,7 @@ public class MapperGenerator : IIncrementalGenerator
          mapMethodSb.AppendLine("    {");
          mapMethodSb.AppendLine("        [Pure]");
          GenerateMethodDocs(info, mapMethodSb);
-         mapMethodSb.AppendLine($"        public static {info.DestinationType.Name} Map({info.SourceType.Name} src, MapperContext? ctx = null)");
+         mapMethodSb.AppendLine($"        public static {info.DestinationType.Name} Map({info.SourceType.Name} src, MapperContextBase? ctx = null)");
          mapMethodSb.AppendLine("        {");
 
         if (info.DestinationType.TypeKind is TypeKind.Interface || info.DestinationType.IsAbstract)

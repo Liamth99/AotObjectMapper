@@ -24,7 +24,7 @@ public partial class MappingHookTests
         }
 
         [PreMap<UserDto, User>]
-        private static void PreMapUser(UserDto src, User dest, MapperContext ctx)
+        private static void PreMapUser(UserDto src, User dest, MapperContextBase ctx)
         {
             src.FirstName = (string)ctx.AdditionalContext["redactmsg"];
             ctx.AdditionalContext["redactmsg"] = "was used";

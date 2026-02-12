@@ -21,7 +21,7 @@
 
 <h2>Using MapperContext</h2>
 
-<p>When present, the <code>MapperContext</code> parameter is automatically passed from generated mapping code. Use the context for additional state or external data access.</p>
+<p>When present, the <code>MapperContextBase</code> parameter is automatically passed from generated mapping code. Use the context for additional state or external data access.</p>
 
 <CodeBlock Language="CodeLanguage.CSharp" EnableLineNumbers="true" Code=@ContextExample />
 @code
@@ -54,7 +54,7 @@ public partial class UserMapper
     const string ContextExample =
 """
 [ForMember<User, UserDto>(nameof(UserDto.FirstName))]
-public static string MapName(User source, MapperContext context)
+public static string MapName(User source, MapperContextBase context)
 {
     var extra = context.AdditionalContext["ExtraMetadata"];
     return $"{source.FirstName} {extra}";
