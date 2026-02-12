@@ -209,7 +209,10 @@ public class MapperGenerator : IIncrementalGenerator
             if(GeneratorUtils.InstanceTypeMapSwitchStatement("src", info, out var statement))
                 mapMethodSb.AppendLine($"            {statement}");
             mapMethodSb.AppendLine($"            ctx ??= new MapperContext();");
-            mapMethodSb.AppendLine($"            return ctx.GetOrMapObject<{info.SourceType.Name}, {info.DestinationType.Name}>(src, ctx, static () => {info.DestinationType.BlankTypeConstructor()}, {info.DestinationType.Name}_Utils.Populate);");
+
+            var ctor = info.DestinationType.BlankTypeConstructor(info, out var ctorArgs);
+
+            mapMethodSb.AppendLine($"            return ctx.GetOrMapObject<{info.SourceType.Name}, {info.DestinationType.Name}>(src, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {info.DestinationType.Name}_Utils.Populate);");
         }
         else
         {
@@ -219,7 +222,7 @@ public class MapperGenerator : IIncrementalGenerator
             mapMethodSb.AppendLine($"");
             mapMethodSb.AppendLine($"            // Pre Map Actions");
             mapMethodSb.AppendLine($"            ctx.IncrementDepth();");
-            mapMethodSb.AppendLine($"            var dest = {info.DestinationType.BlankTypeConstructor()};");
+            mapMethodSb.AppendLine($"            var dest = {info.DestinationType.BlankTypeConstructor(info, out _)};");
 
             foreach (var mapMethodInfo in info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
             {

@@ -16,15 +16,14 @@ public class MapperContext
 {
 
 #if DEBUG
-
     /// Represents the total number of mapping operations performed within the context.
     /// Used for debugging and tracking the performance of the mapping process.
-    public int TotalMaps { get;              set; }
+    public int TotalMaps { get; private set; }
 
     /// Represents the total number of objects that are referenced during the mapping process.
     /// This property is used to track how many previously instantiated or referenced objects
     /// have been identified and reused, primarily for debugging and optimization purposes.
-    public int TotalReferencedObjects { get; set; }
+    public int TotalReferencedObjects { get; private set; }
 #endif
 
     private string DebugString()
@@ -119,6 +118,34 @@ public class MapperContext
         }
 
         var newObj = sourceInitializer.Invoke();
+
+        _existingRefencedObjects.Add(source, newObj);
+
+        populateMethod(newObj, source, context);
+
+        return newObj;
+    }
+
+    /// <summary>
+    /// Retrieves a mapped object from the context if it already exists, or maps the object if it is not found.
+    /// </summary>
+    /// <param name="source">The source object to be looked up or mapped.</param>
+    /// <param name="context">The current state of the mapping context.</param>
+    /// <param name="sourceInitializer">A function that initializes a new instance of the destination object if one does not already exist.</param>
+    /// <param name="populateMethod">The mapping action to populate the object if one does not already exist.</param>
+    /// <returns>The mapped destination object associated with the source.</returns>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public TDestination GetOrMapObject<TSource, TDestination>(TSource source, MapperContext context, Func<MapperContext, TDestination> sourceInitializer, Action<TDestination, TSource, MapperContext> populateMethod) where TSource : notnull where TDestination : notnull
+    {
+        if (_existingRefencedObjects.TryGetValue(source, out var destination))
+        {
+#if DEBUG
+            TotalReferencedObjects++;
+#endif
+            return (TDestination)destination;
+        }
+
+        var newObj = sourceInitializer.Invoke(context);
 
         _existingRefencedObjects.Add(source, newObj);
 
