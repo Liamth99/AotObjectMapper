@@ -78,8 +78,25 @@ public static class ITypeSymbolExtensions
             return false;
         }
 
-        public string BlankTypeConstructor()
-            => $"new {type.ToDisplayString()}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
+        public string BlankTypeConstructor(MethodGenerationInfo? info, out (string type, string argName)[] arguments)
+        {
+            if (info?.FactoryMethod is not null)
+            {
+                if (info.FactoryMethod?.Parameters.Length is 1)
+                {
+                    arguments = [new("global::AotObjectMapper.Abstractions.Models.MapperContext" ,"ctx")];
+                    return $"{info.FactoryMethod.Name}(ctx)";
+                }
+                else
+                {
+                    arguments = [];
+                    return $"{info.FactoryMethod.Name}()";
+                }
 
+            }
+
+            arguments = [];
+            return $"new {type.ToDisplayString()}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
+        }
     }
 }

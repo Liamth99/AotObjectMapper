@@ -44,6 +44,9 @@ public sealed class MethodGenerationInfo
     /// Represents a collection of mapping-related attributes associated with the current mapping process.
     public AttributeData[] AllMaps { get; }
 
+    /// Represents the factory method used to generate or construct instances within the mapper code.
+    public IMethodSymbol? FactoryMethod { get; }
+
     public List<(ITypeSymbol source, ITypeSymbol destination)> PossibleTypeMaps { get; }
 
     /// A collection of methods that are defined by the user in the mapper class.
@@ -171,6 +174,19 @@ public sealed class MethodGenerationInfo
                         .Where(x => x.Method is not null) // Required check as above we suppress the null warning
                         .ToArray();
 
+        FactoryMethod = UserDefinedMapperMethods
+                       .SingleOrDefault(method =>
+                            {
+                                var attributes = method.GetAttributes();
+                                var attribute = attributes.SingleOrDefault(
+                                    attr => attr.AttributeClass?.Name == nameof(UseFactoryAttribute<>));
+
+                                if (attribute is null)
+                                    return false;
+
+                                return attribute.AttributeClass!.TypeArguments[0].Equals(DestinationType, SymbolEqualityComparer.Default);
+                            });
+
         int mappingOptions = Convert.ToInt32(MapperType.GetAttributes().Single(x => x.AttributeClass!.Name == nameof(GenerateMapperAttribute)).ConstructorArguments[0].Value);
 
         IgnoredMembers               = mapAttributeData.ConstructorArguments[0].Values.Select(x => x.Value).OfType<string>().ToArray();
@@ -265,9 +281,14 @@ public sealed class MethodGenerationInfo
         if (otherMapper is not null)
         {
             if (PreserveReferences)
-                assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static () => {otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor()}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)";
+            {
+                var ctor = otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor(this, out var ctorArgs);
+                assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.{otherMapper.AttributeClass!.TypeArguments[2].Name}_Utils.Populate)";
+            }
             else
+            {
                 assignmentExpression = $"{otherMapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map({sourceExpression}, ctx)";
+            }
 
             return true;
         }
@@ -280,9 +301,14 @@ public sealed class MethodGenerationInfo
             var method = otherMapMethods.First();
 
             if (PreserveReferences)
-                assignmentExpression = $"ctx.GetOrMapObject<{method.source.ToDisplayString()}, {method.destination.ToDisplayString()}>({sourceExpression}, ctx, static () => {method.destination.BlankTypeConstructor()}, {MapperType.ToDisplayString()}.{method.destination.Name}_Utils.Populate)";
+            {
+                var ctor = method.destination.BlankTypeConstructor(this, out var ctorArgs);
+                assignmentExpression = $"ctx.GetOrMapObject<{method.source.ToDisplayString()}, {method.destination.ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {MapperType.ToDisplayString()}.{method.destination.Name}_Utils.Populate)";
+            }
             else
+            {
                 assignmentExpression = $"{MapperType.ToDisplayString()}.Map({sourceExpression}, ctx)";
+            }
 
             return true;
         }
