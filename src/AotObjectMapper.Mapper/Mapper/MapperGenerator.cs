@@ -55,7 +55,7 @@ public class MapperGenerator : IIncrementalGenerator
             try
             {
                 var code = GenerateMapperClass(compilation, mapper, context);
-                context.AddSource($"{mapper.OriginalDefinition.Name}.g.cs", SourceText.From(code, Encoding.UTF8));
+                context.AddSource($"{mapper.OriginalDefinition}.g.cs", SourceText.From(code, Encoding.UTF8));
             }
             catch (Exception ex)
             {
