@@ -96,7 +96,7 @@ public static class ITypeSymbolExtensions
             }
 
             arguments = [];
-            return $"new {type.ToDisplayString()}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
+            return $"new global::{type.ToDisplayString()}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
         }
     }
 }
