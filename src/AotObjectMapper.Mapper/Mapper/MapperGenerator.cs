@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using AotObjectMapper.Mapper.Info;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -191,7 +192,7 @@ public class MapperGenerator : IIncrementalGenerator
                 foreach (var mapMethodInfo in info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
                 {
                     isb.AppendLine();
-                    isb.AppendLine($"{mapMethodInfo.Method.Name}(src, dest{(mapMethodInfo.Method.Parameters.Length is 3 ? ", ctx" : "")});");
+                    isb.AppendLine($"{mapMethodInfo.Symbol.Name}(src, dest{(mapMethodInfo.Symbol.Parameters.Length is 3 ? ", ctx" : "")});");
                 }
 
                 if (propertyAssignments.Any())
@@ -212,7 +213,7 @@ public class MapperGenerator : IIncrementalGenerator
                 {
                     foreach (var mapMethodInfo in info.PostMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
                     {
-                        isb.AppendLine($"{mapMethodInfo.Method.Name}(dest{(mapMethodInfo.Method.Parameters.Length is 2 ? ", ctx" : "")});");
+                        isb.AppendLine($"{mapMethodInfo.Symbol.Name}(dest{(mapMethodInfo.Symbol.Parameters.Length is 2 ? ", ctx" : "")});");
                     }
                 }
 
@@ -267,7 +268,7 @@ public class MapperGenerator : IIncrementalGenerator
             foreach (var premapMethod in info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
             {
                 isb.AppendLine();
-                isb.AppendLine($"{premapMethod.Method.Name}(src, dest{(premapMethod.Method.Parameters.Length is 3 ? ", ctx" : "")});");
+                isb.AppendLine($"{premapMethod.Symbol.Name}(src, dest{(premapMethod.Symbol.Parameters.Length is 3 ? ", ctx" : "")});");
             }
 
             var propertiesToAssign = propertyAssignments.Where(x => x.assignemnt is not ("null!" or "null" or "default!" or "default")).ToArray();
@@ -290,7 +291,7 @@ public class MapperGenerator : IIncrementalGenerator
             {
                 foreach (var postMapMethod in info.PostMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
                 {
-                    isb.AppendLine($"{postMapMethod.Method.Name}(dest{(postMapMethod.Method.Parameters.Length is 2 ? ", ctx" : "")});");
+                    isb.AppendLine($"{postMapMethod.Symbol.Name}(dest{(postMapMethod.Symbol.Parameters.Length is 2 ? ", ctx" : "")});");
                 }
             }
 
