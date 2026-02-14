@@ -67,6 +67,8 @@ public sealed class MethodGenerationInfo
     /// members during the generation of mapping logic.
     public SymbolAttributeInfo<IMethodSymbol>[] ForMemberMethods { get; }
 
+    public AttributeData[] MapMemberAttributes { get; }
+
     public string[] IgnoredMembers { get; }
 
     public bool AllowIConvertable            { get; }
@@ -123,6 +125,8 @@ public sealed class MethodGenerationInfo
         FactoryMethod = UserDefinedMapperMethods.SingleOrDefault(method => method.GetGenericAttribute(nameof(UseFactoryAttribute<>), DestinationType) is not null);
 
         ForMemberMethods = UserDefinedMapperMethods.GetSymbolsWithSingleGenericAttribute(nameof(ForMemberAttribute<,>), SourceType, DestinationType).ToArray();
+
+        MapMemberAttributes = mapperType.GetAttributes().Where(x => x.AttributeClass?.Name == nameof(MapMemberAttribute<,>)).ToArray();
     }
 
     public IEnumerable<(IPropertySymbol propertySymbol, string assignemnt)> GeneratePropertyAssignments(Compilation compilation)
