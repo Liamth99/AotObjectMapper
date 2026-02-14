@@ -30,18 +30,19 @@ public sealed class MethodGenerationInfo
     /// based on their runtime or compile-time polymorphism relationships.
     public Dictionary<ITypeSymbol, List<ITypeSymbol>> PolymorphableTypes { get; }
 
-    public AttributeData MapAttribute;
+    /// The <see cref="GenerateMapperAttribute"/> used during the mapping process to define mapping rules.
+    public AttributeData MapAttribute { get; }
 
-    /// An array of attribute data representing mapping-related attributes applied to the method, utilized during the code generation process.
+    /// An array of <see cref="MapAttribute{TSource, TDestination}"/> data representing mapping-related attributes applied to the method, utilized during the code generation process.
     public AttributeData[] Maps { get; }
 
-    /// A collection of attribute data representing additional mappers needed for nested or complex mapping scenarios.
+    /// An array of <see cref="MapAttribute{TSource, TDestination}"/> representing additional mappers needed for nested or complex mapping scenarios.
     public AttributeData[] OtherMappers { get; }
 
-    /// Represents a collection of mapping-related attributes associated with the current mapping process.
+    /// An array of <see cref="MapAttribute{TSource, TDestination}"/> attributes associated with the current mapping process.
     public AttributeData[] AllMaps { get; }
 
-    /// Represents the factory method used to generate or construct instances within the mapper code.
+    /// Represents the factory method used to an instance of <see cref="DestinationType"/> within the mapper code.
     public IMethodSymbol? FactoryMethod { get; }
 
     public List<(ITypeSymbol source, ITypeSymbol destination)> PossibleTypeMaps { get; }
@@ -55,7 +56,7 @@ public sealed class MethodGenerationInfo
     /// A collection of methods invoked after the mapping operation is complete.
     public SymbolAttributeInfo<IMethodSymbol>[] PostMapMethods { get; }
 
-    /// Represents an array containing all pre-mapping queries extracted from methods annotated with relevant attributes for use in the object mapping process.
+    /// An array containing all pre-mapping queries extracted from methods annotated with relevant attributes for use in the object mapping process.
     public SymbolAttributeInfo<IMethodSymbol>[] AllPreMapQueries { get; }
 
     /// Represents a collection of map method information that corresponds to post-map query operations
