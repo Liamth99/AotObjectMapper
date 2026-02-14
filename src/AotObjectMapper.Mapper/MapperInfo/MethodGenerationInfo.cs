@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 
-namespace AotObjectMapper.Mapper;
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+
+namespace AotObjectMapper.Mapper.Info;
 
 public sealed class MethodGenerationInfo
 {
@@ -11,65 +14,66 @@ public sealed class MethodGenerationInfo
     public INamedTypeSymbol MapperType { get; }
 
     /// Represents the source type from which data is being mapped.
-    public INamedTypeSymbol SourceType { get;  }
+    public INamedTypeSymbol SourceType { get; }
 
     /// Represents the collection of readable properties from the source type used during the generation of mapping logic in a mapper.
-    public IPropertySymbol[] SourceProperties { get;  }
+    public IPropertySymbol[] SourceProperties { get; }
 
     /// The type representing the destination object in the mapping process.
-    public INamedTypeSymbol DestinationType { get;  }
+    public INamedTypeSymbol DestinationType { get; }
 
     /// A dictionary representing the setable properties of the destination type.
-    public Dictionary<string, IPropertySymbol> DestinationProperties { get;  }
+    public Dictionary<string, IPropertySymbol> DestinationProperties { get; }
 
     /// A dictionary that maps a type to a list of types it can polymorphically convert to in the context of object mapping.
     /// This property is used to handle scenarios where source types can be mapped to multiple destination types
     /// based on their runtime or compile-time polymorphism relationships.
     public Dictionary<ITypeSymbol, List<ITypeSymbol>> PolymorphableTypes { get; }
 
-    public AttributeData MapAttribute;
+    /// The <see cref="GenerateMapperAttribute"/> used during the mapping process to define mapping rules.
+    public AttributeData MapAttribute { get; }
 
-    /// An array of attribute data representing mapping-related attributes applied to the method, utilized during the code generation process.
+    /// An array of <see cref="MapAttribute{TSource, TDestination}"/> data representing mapping-related attributes applied to the method, utilized during the code generation process.
     public AttributeData[] Maps { get; }
 
-    /// A collection of attribute data representing additional mappers needed for nested or complex mapping scenarios.
+    /// An array of <see cref="MapAttribute{TSource, TDestination}"/> representing additional mappers needed for nested or complex mapping scenarios.
     public AttributeData[] OtherMappers { get; }
 
-    /// Represents a collection of mapping-related attributes associated with the current mapping process.
+    /// An array of <see cref="MapAttribute{TSource, TDestination}"/> attributes associated with the current mapping process.
     public AttributeData[] AllMaps { get; }
 
-    /// Represents the factory method used to generate or construct instances within the mapper code.
+    /// Represents the factory method used to an instance of <see cref="DestinationType"/> within the mapper code.
     public IMethodSymbol? FactoryMethod { get; }
 
     public List<(ITypeSymbol source, ITypeSymbol destination)> PossibleTypeMaps { get; }
 
     /// A collection of methods that are defined by the user in the mapper class.
-    public IMethodSymbol[] UserDefinedMapperMethods { get;  }
+    public IMethodSymbol[] UserDefinedMapperMethods { get; }
 
     /// A collection of methods that are executed before property assignments during the object mapping process.
-    public MapMethodInfo[] PreMapMethods { get;  }
+    public SymbolAttributeInfo<IMethodSymbol>[] PreMapMethods { get; }
 
     /// A collection of methods invoked after the mapping operation is complete.
-    public MapMethodInfo[] PostMapMethods { get;  }
+    public SymbolAttributeInfo<IMethodSymbol>[] PostMapMethods { get; }
 
-    /// Represents an array containing all pre-mapping queries extracted from methods annotated with relevant attributes for use in the object mapping process.
-    public MapMethodInfo[] AllPreMapQueries { get;  }
+    /// An array containing all pre-mapping queries extracted from methods annotated with relevant attributes for use in the object mapping process.
+    public SymbolAttributeInfo<IMethodSymbol>[] AllPreMapQueries { get; }
 
     /// Represents a collection of map method information that corresponds to post-map query operations
     /// defined in the context of a mapping process.
-    public MapMethodInfo[] AllPostMapQueries { get;  }
+    public SymbolAttributeInfo<IMethodSymbol>[] AllPostMapQueries { get; }
 
     /// Represents a collection of user-defined mapping methods that are explicitly specified for mapping individual
     /// members during the generation of mapping logic.
-    public MapMethodInfo[] ForMemberMethods { get;  }
+    public SymbolAttributeInfo<IMethodSymbol>[] ForMemberMethods { get; }
 
-    public string[] IgnoredMembers { get;  }
+    public string[] IgnoredMembers { get; }
 
-    public bool AllowIConvertable            {get; }
-    public bool SuppressNullWarnings         {get; }
-    public bool PreserveReferences           {get; }
-    public bool MapEnumsByValue              {get; }
-    public bool ThrowExceptionOnUnmappedEnum {get; }
+    public bool AllowIConvertable            { get; }
+    public bool SuppressNullWarnings         { get; }
+    public bool PreserveReferences           { get; }
+    public bool MapEnumsByValue              { get; }
+    public bool ThrowExceptionOnUnmappedEnum { get; }
 
 
     public MethodGenerationInfo(ITypeSymbol mapperType, AttributeData mapAttr)
@@ -92,93 +96,7 @@ public sealed class MethodGenerationInfo
 
         PolymorphableTypes = InheritanceUtils.CreatePolymorphismMap(PossibleTypeMaps.Select(x => x.source).Concat(PossibleTypeMaps.Select(x => x.destination)));
 
-        // Ive done this instead of parsing it through as an argument to to make things simpler when doing nested mapping
-        var mapAttributeData = mapperType
-                              .GetAttributes()
-                              .Single(x =>
-                                          x.AttributeClass!.Name == nameof(MapAttribute<,>) &&
-                                          x.AttributeClass.TypeArguments[0].Equals(SourceType, SymbolEqualityComparer.Default) &&
-                                          x.AttributeClass.TypeArguments[1].Equals(DestinationType, SymbolEqualityComparer.Default)
-                               );
-
-        UserDefinedMapperMethods = MapperType.GetMembers().OfType<IMethodSymbol>().ToArray();
-
-        PreMapMethods = UserDefinedMapperMethods
-                       .Select(method =>
-                        {
-                            var attributes = method.GetAttributes();
-                            var attribute = attributes.SingleOrDefault(
-                                attr => attr.AttributeClass?.Name == nameof(PreMapAttribute<,>) &&
-                                        attr.AttributeClass!.TypeArguments[0].Equals(SourceType, SymbolEqualityComparer.Default) &&
-                                        attr.AttributeClass!.TypeArguments[1].Equals(DestinationType, SymbolEqualityComparer.Default));
-
-                            if (attribute is null)
-                                return new MapMethodInfo(null!, null!);
-
-                            return new MapMethodInfo(method, attribute);
-                        })
-                       .Where(x => x.Method is not null) // Required check as above we suppress the null warning
-                       .ToArray();
-
-        PostMapMethods = UserDefinedMapperMethods
-                            .Select(method =>
-                             {
-                                 var attributes = method.GetAttributes();
-                                 var attribute = attributes.SingleOrDefault(
-                                     attr => attr.AttributeClass?.Name == nameof(PostMapAttribute<,>) &&
-                                             attr.AttributeClass!.TypeArguments[0].Equals(SourceType, SymbolEqualityComparer.Default) &&
-                                             attr.AttributeClass!.TypeArguments[1].Equals(DestinationType, SymbolEqualityComparer.Default));
-
-                                 if (attribute is null)
-                                     return new MapMethodInfo(null!, null!);
-
-                                 return new MapMethodInfo(method, attribute);
-                             })
-                            .Where(x => x.Method is not null) // Required check as above we suppress the null warning
-                            .ToArray();
-
-        AllPreMapQueries = UserDefinedMapperMethods
-                       .Select(method =>
-                        {
-                            var attributes = method.GetAttributes();
-                            var attribute = attributes.SingleOrDefault(
-                                attr => attr.AttributeClass?.Name == nameof(PreMapQueryAttribute<,>));
-
-                            if (attribute is null)
-                                return new MapMethodInfo(null!, null!);
-
-                            return new MapMethodInfo(method, attribute);
-                        })
-                       .Where(x => x.Method is not null) // Required check as above we suppress the null warning
-                       .ToArray();
-
-        AllPostMapQueries = UserDefinedMapperMethods
-                        .Select(method =>
-                                {
-                                    var attributes = method.GetAttributes();
-                                    var attribute = attributes.SingleOrDefault(
-                                        attr => attr.AttributeClass?.Name == nameof(PostMapQueryAttribute<,>));
-
-                                    if (attribute is null)
-                                        return new MapMethodInfo(null!, null!);
-
-                                    return new MapMethodInfo(method, attribute);
-                                })
-                        .Where(x => x.Method is not null) // Required check as above we suppress the null warning
-                        .ToArray();
-
-        FactoryMethod = UserDefinedMapperMethods
-                       .SingleOrDefault(method =>
-                            {
-                                var attributes = method.GetAttributes();
-                                var attribute = attributes.SingleOrDefault(
-                                    attr => attr.AttributeClass?.Name == nameof(UseFactoryAttribute<>));
-
-                                if (attribute is null)
-                                    return false;
-
-                                return attribute.AttributeClass!.TypeArguments[0].Equals(DestinationType, SymbolEqualityComparer.Default);
-                            });
+        var mapAttributeData = mapperType.GetGenericAttribute(nameof(MapAttribute<,>), SourceType, DestinationType)!;
 
         int mappingOptions = Convert.ToInt32(MapperType.GetAttributes().Single(x => x.AttributeClass!.Name == nameof(GenerateMapperAttribute)).ConstructorArguments[0].Value);
 
@@ -190,25 +108,21 @@ public sealed class MethodGenerationInfo
         ThrowExceptionOnUnmappedEnum = (mappingOptions & 16U) > 0;
 
         SourceProperties = SourceType.GetAllReadableProperties().ToArray();
-
         DestinationProperties = DestinationType.GetAllReadableProperties().ToDictionary(p => p.Name);
 
-        ForMemberMethods = UserDefinedMapperMethods
-                               .Select(method =>
-                                {
-                                    var attributes = method.GetAttributes();
-                                    var attribute = attributes.SingleOrDefault(
-                                        attr => attr.AttributeClass?.Name == nameof(ForMemberAttribute<,>) &&
-                                                attr.AttributeClass!.TypeArguments[0].Equals(SourceType, SymbolEqualityComparer.Default) &&
-                                                attr.AttributeClass!.TypeArguments[1].Equals(DestinationType, SymbolEqualityComparer.Default));
+        UserDefinedMapperMethods = mapperType.GetMembers().OfType<IMethodSymbol>().ToArray();
 
-                                    if (attribute is null)
-                                        return new MapMethodInfo(null!, null!);
+        PreMapMethods = UserDefinedMapperMethods.GetSymbolsWithSingleGenericAttribute(nameof(PreMapAttribute<,>), SourceType, DestinationType).ToArray();
 
-                                    return new MapMethodInfo(method, attribute);
-                                })
-                               .Where(x => x.Method is not null) // Required check as above we suppress the null warning
-                               .ToArray();
+        PostMapMethods = UserDefinedMapperMethods.GetSymbolsWithSingleGenericAttribute(nameof(PostMapAttribute<,>), SourceType, DestinationType).ToArray();
+
+        AllPreMapQueries = UserDefinedMapperMethods.GetSymbolsWithSingleAttribute(nameof(PreMapQueryAttribute<,>)).ToArray();
+
+        AllPostMapQueries = UserDefinedMapperMethods.GetSymbolsWithSingleAttribute(nameof(PostMapQueryAttribute<,>)).ToArray();
+
+        FactoryMethod = UserDefinedMapperMethods.SingleOrDefault(method => method.GetGenericAttribute(nameof(UseFactoryAttribute<>), DestinationType) is not null);
+
+        ForMemberMethods = UserDefinedMapperMethods.GetSymbolsWithSingleGenericAttribute(nameof(ForMemberAttribute<,>), SourceType, DestinationType).ToArray();
     }
 
     public IEnumerable<(IPropertySymbol propertySymbol, string assignemnt)> GeneratePropertyAssignments(Compilation compilation)
@@ -223,7 +137,7 @@ public sealed class MethodGenerationInfo
             if (IgnoredMembers.Any(x => x.Equals(destProp.Name)))
                 continue;
 
-            if(TryBuildAssignmentExpression(srcProp.Type ,destProp.Type, $"src.{srcProp.Name}", srcProp.NullableAnnotation is not NullableAnnotation.None, compilation, out var expression))
+            if(TryBuildAssignmentExpression(compilation, srcProp.Type ,destProp.Type, $"src.{srcProp.Name}", srcProp.NullableAnnotation is not NullableAnnotation.None, out var expression))
                 assignments.Add(new (destProp, expression));
         }
 
@@ -232,7 +146,7 @@ public sealed class MethodGenerationInfo
             if(!DestinationProperties.TryGetValue((string)mapToMethod.Attribute.ConstructorArguments[0].Value!, out var destProp))
                 continue;
 
-            assignments.Add(new (destProp, $"{mapToMethod.Method.Name}(src{(mapToMethod.Method.Parameters.Length is 2 ? ", ctx" : "")})"));
+            assignments.Add(new (destProp, $"{mapToMethod.Symbol.Name}(src{(mapToMethod.Symbol.Parameters.Length is 2 ? ", ctx" : "")})"));
         }
 
         if (SuppressNullWarnings)
@@ -252,7 +166,7 @@ public sealed class MethodGenerationInfo
         return assignments;
     }
 
-    private bool TryBuildAssignmentExpression(ITypeSymbol sourceType, ITypeSymbol destinationType, string sourceExpression, bool sourceIsNullable, Compilation compilation, out string assignmentExpression)
+    private bool TryBuildAssignmentExpression(Compilation compilation, ITypeSymbol sourceType, ITypeSymbol destinationType, string sourceExpression, bool sourceIsNullable, out string assignmentExpression)
     {
         // exact type match
         if (sourceType.Equals(destinationType, SymbolEqualityComparer.Default))
@@ -292,11 +206,11 @@ public sealed class MethodGenerationInfo
             if (PreserveReferences)
             {
                 var ctor = method.destination.BlankTypeConstructor(this, out var ctorArgs);
-                assignmentExpression = $"ctx.GetOrMapObject<{method.source.ToDisplayString()}, {method.destination.ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {MapperType.ToDisplayString()}.Utils.Populate)";
+                assignmentExpression = $"ctx.GetOrMapObject<global::{method.source.ToDisplayString()}, global::{method.destination.ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, global::{MapperType.ToDisplayString()}.Utils.Populate)";
             }
             else
             {
-                assignmentExpression = $"{MapperType.ToDisplayString()}.Map({sourceExpression}, ctx)";
+                assignmentExpression = $"global::{MapperType.ToDisplayString()}.Map({sourceExpression}, ctx)";
             }
 
             return true;
@@ -306,7 +220,7 @@ public sealed class MethodGenerationInfo
         if (sourceType.TypeKind is TypeKind.Enum && destinationType.TypeKind is TypeKind.Enum)
         {
             if (MapEnumsByValue)
-                assignmentExpression = $"({destinationType.ToDisplayString()}){sourceExpression}";
+                assignmentExpression = $"(global::{destinationType.ToDisplayString()}){sourceExpression}";
             else
                 assignmentExpression = $"{GeneratorUtils.EnumMapSwitchStatement(sourceExpression, sourceType, destinationType, ThrowExceptionOnUnmappedEnum)}";
 
@@ -316,7 +230,7 @@ public sealed class MethodGenerationInfo
         // IEnumerable
         if(TryGetEnumerableInitializationInfo(sourceType, out var sourceElementType))
             if(TryGetEnumerableInitializationInfo(destinationType, out var destinationElementType))
-                if (TryBuildAssignmentExpression(sourceElementType, destinationElementType, "x", destinationElementType.NullableAnnotation is not NullableAnnotation.None, compilation, out var elementExpression))
+                if (TryBuildAssignmentExpression(compilation, sourceElementType, destinationElementType, "x", destinationElementType.NullableAnnotation is not NullableAnnotation.None, out var elementExpression))
                     if(TryGetEnumerationInitialization(destinationType, sourceElementType, destinationElementType, sourceExpression, elementExpression, out string selectExpression))
                     {
                         assignmentExpression = $"{selectExpression}";
@@ -391,12 +305,12 @@ public sealed class MethodGenerationInfo
         string selectExpression;
 
         if (preMapQuery is not null)
-            selectExpression = $"{preMapQuery.Method.Name}({sourceExpression}{(preMapQuery.Method.Parameters.Length is 2 ? ", ctx" : "")}).Select(x => {assignmentExpression})";
+            selectExpression = $"{preMapQuery.Symbol.Name}({sourceExpression}{(preMapQuery.Symbol.Parameters.Length is 2 ? ", ctx" : "")}).Select(x => {assignmentExpression})";
         else
             selectExpression = $"{sourceExpression}.Select(x => {assignmentExpression})";
 
         if (postMapQuery is not null)
-            selectExpression = $"{postMapQuery.Method.Name}({selectExpression}{(postMapQuery.Method.Parameters.Length is 2 ? ", ctx" : "")})";
+            selectExpression = $"{postMapQuery.Symbol.Name}({selectExpression}{(postMapQuery.Symbol.Parameters.Length is 2 ? ", ctx" : "")})";
 
         if (destinationPropertyType.Name is "IEnumerable")
             initialization = selectExpression;
@@ -409,10 +323,4 @@ public sealed class MethodGenerationInfo
 
         return initialization is not null;
     }
-}
-
-public sealed class MapMethodInfo(IMethodSymbol method, AttributeData attribute)
-{
-    public IMethodSymbol Method    { get; } = method;
-    public AttributeData Attribute { get; } = attribute;
 }

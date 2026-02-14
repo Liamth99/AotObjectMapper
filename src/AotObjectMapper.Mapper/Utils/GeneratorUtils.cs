@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using AotObjectMapper.Mapper.Info;
 using Microsoft.CodeAnalysis;
 
 namespace AotObjectMapper.Mapper.Utils;

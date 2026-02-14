@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using AotObjectMapper.Mapper.Info;
 using Microsoft.CodeAnalysis;
 
 namespace AotObjectMapper.Mapper.Extensions;
