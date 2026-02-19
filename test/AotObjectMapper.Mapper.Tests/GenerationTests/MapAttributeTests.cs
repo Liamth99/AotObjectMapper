@@ -39,7 +39,7 @@ public class MapAttributeTests
         """;
 
     [Fact]
-    public void Map_NoDiagnostics()
+    public void MapAttribute_NoDiagnostics()
     {
         var results = GeneratorTestHelper.RunGenerator(SourceCode);
 
@@ -47,7 +47,7 @@ public class MapAttributeTests
     }
 
     [Fact]
-    public void Map_CreatesMapMethod()
+    public void MapAttribute_MapMethod_CreateMethod()
     {
         var results = GeneratorTestHelper.RunGenerator(SourceCode);
 
@@ -73,7 +73,7 @@ public class MapAttributeTests
     }
 
     [Fact]
-    public async Task Map_MethodIncrementsAndDecrementsDepth()
+    public async Task MapAttribute_MapMethod_IncrementsAndDecrementsDepth()
     {
         var results = GeneratorTestHelper.RunGenerator(SourceCode);
 
@@ -101,7 +101,7 @@ public class MapAttributeTests
     }
 
     [Fact]
-    public async Task Map_MethodAssignsId()
+    public async Task MapAttribute_MapMethod_AssignsId()
     {
         var results = GeneratorTestHelper.RunGenerator(SourceCode);
 
@@ -119,6 +119,84 @@ public class MapAttributeTests
                                           .ToArray();
 
         var assignment = assignments[1];
+
+        assignment.Left.ToString().ShouldBe("dest.Id");
+        assignment.Right.ToString().ShouldBe("src.Id");
+    }
+
+    [Fact]
+    public void MapAttribute_Utils_CreatesUtilsPopulateMethod()
+    {
+        var results = GeneratorTestHelper.RunGenerator(SourceCode);
+
+        var assm = GeneratorTestHelper.CompileToAssembly(results.Compilation);
+
+        var genClass =  assm.GetType("TestNamespace.Generators.TestGen+Utils", throwOnError: true);
+        genClass.ShouldNotBeNull();
+
+        var methods = genClass.GetMethods();
+
+        var mapMethod = methods.SingleOrDefault(x => x.Name == "Populate");
+        mapMethod.ShouldNotBeNull();
+
+        mapMethod.IsStatic.ShouldBeTrue();
+        mapMethod.IsPublic.ShouldBeTrue();
+
+        var parameters = mapMethod.GetParameters();
+        parameters.Length.ShouldBe(3);
+
+        parameters[0].ParameterType.FullName.ShouldBe("TestNamespace.Models.Destination");
+        parameters[1].ParameterType.FullName.ShouldBe("TestNamespace.Models.Source");
+        parameters[2].ParameterType.FullName.ShouldBe("AotObjectMapper.Abstractions.Models.MapperContextBase");
+    }
+
+    [Fact]
+    public async Task MapAttribute_Utils_MethodIncrementsAndDecrementsDepth()
+    {
+        var results = GeneratorTestHelper.RunGenerator(SourceCode);
+
+        var rootNode         = await results.Result.GeneratedTrees[0].GetRootAsync(TestContext.Current.CancellationToken);
+        var methodSyntaxNode = rootNode
+                              .DescendantNodes()
+                              .OfType<MethodDeclarationSyntax>()
+                              .SingleOrDefault(x => x.Identifier.Text == "Populate");
+
+        methodSyntaxNode.ShouldNotBeNull();
+
+        var statements = methodSyntaxNode.Body!.Statements;
+
+        var incrementIndex = statements
+                            .Select((s, i) => (Statement: s, Index: i))
+                            .First(x => x.Statement.ToString().Contains("IncrementDepth"))
+                            .Index;
+
+        var decrementIndex = statements
+                            .Select((s, i) => (Statement: s, Index: i))
+                            .First(x => x.Statement.ToString().Contains("DecrementDepth"))
+                            .Index;
+
+        incrementIndex.ShouldBeLessThan(decrementIndex);
+    }
+
+    [Fact]
+    public async Task MapAttribute_Utils_MethodAssignsId()
+    {
+        var results = GeneratorTestHelper.RunGenerator(SourceCode);
+
+        var rootNode         = await results.Result.GeneratedTrees[0].GetRootAsync(TestContext.Current.CancellationToken);
+        var methodSyntaxNode = rootNode
+                              .DescendantNodes()
+                              .OfType<MethodDeclarationSyntax>()
+                              .SingleOrDefault(x => x.Identifier.Text == "Populate");
+
+        methodSyntaxNode.ShouldNotBeNull();
+
+        var assignments = methodSyntaxNode.Body!
+                                          .DescendantNodes()
+                                          .OfType<AssignmentExpressionSyntax>()
+                                          .ToArray();
+
+        var assignment = assignments[0];
 
         assignment.Left.ToString().ShouldBe("dest.Id");
         assignment.Right.ToString().ShouldBe("src.Id");
