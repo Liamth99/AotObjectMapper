@@ -56,15 +56,6 @@ public class MapperGenerator : IIncrementalGenerator
 
             try
             {
-                if (!mapper.DeclaringSyntaxReferences.Any(x => x.GetSyntax() is BaseTypeDeclarationSyntax declaration && declaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))))
-                {
-                    foreach (Location location in mapper.Locations)
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM105_ClassRequiresPartialKeyword, location, mapper.ToDisplayString()));
-                    }
-                    continue;
-                }
-
                 bool anyParentIsNotPartial = false;
 
                 foreach (var parentClassDeclarationSyntax in mapper.DeclaringSyntaxReferences.Select(x => x.GetSyntax()).OfType<BaseTypeDeclarationSyntax>().Select(x => x.Parent).OfType<BaseTypeDeclarationSyntax>())
@@ -74,6 +65,15 @@ public class MapperGenerator : IIncrementalGenerator
                         anyParentIsNotPartial = true;
                         context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM105_ClassRequiresPartialKeyword, parentClassDeclarationSyntax.Identifier.GetLocation(), parentClassDeclarationSyntax.Identifier.Text));
                     }
+                }
+
+                if (!mapper.DeclaringSyntaxReferences.Any(x => x.GetSyntax() is BaseTypeDeclarationSyntax declaration && declaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))))
+                {
+                    foreach (Location location in mapper.Locations)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM105_ClassRequiresPartialKeyword, location, mapper.Name));
+                    }
+                    continue;
                 }
 
                 if(anyParentIsNotPartial)
