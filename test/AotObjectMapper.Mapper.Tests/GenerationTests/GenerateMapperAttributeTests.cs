@@ -2,7 +2,7 @@ using AotObjectMapper.Mapper.Tests.Utils;
 using Shouldly;
 using Xunit;
 
-namespace AotObjectMapper.Mapper.Tests;
+namespace AotObjectMapper.Mapper.Tests.GenerationTests;
 
 public class GenerateMapperAttributeTests
 {
