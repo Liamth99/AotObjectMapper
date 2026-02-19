@@ -1,7 +1,6 @@
 <Solution>
   <Folder Name="/Tests/">
     <Project Path="test/AotObjectMapper.Mapper.Tests/AotObjectMapper.Mapper.Tests.csproj" />
-    <!--Project Path="test/AotObjectMapper.Mapper.Tests/AotObjectMapper.Mapper.Tests.csproj" /-->
     <Project Path="test/AotObjectMapper.Tests/AotObjectMapper.Tests.csproj" />
   </Folder>
   <Project Path="Benchmarks/MappingBenchmarks/MappingBenchmarks.csproj" />
