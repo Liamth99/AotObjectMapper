@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using AotObjectMapper.Mapper.Info;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -33,7 +34,7 @@ public class MapperGenerator : IIncrementalGenerator
     private static INamedTypeSymbol? GetMapperCandidate(GeneratorSyntaxContext context)
     {
         var classSyntax = (ClassDeclarationSyntax)context.Node;
-        var symbol      = context.SemanticModel.GetDeclaredSymbol(classSyntax);
+        var symbol      = ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classSyntax);
 
         if (symbol is null)
             return null;
@@ -55,6 +56,29 @@ public class MapperGenerator : IIncrementalGenerator
 
             try
             {
+                bool anyParentIsNotPartial = false;
+
+                foreach (var parentClassDeclarationSyntax in mapper.DeclaringSyntaxReferences.Select(x => x.GetSyntax()).OfType<BaseTypeDeclarationSyntax>().Select(x => x.Parent).OfType<BaseTypeDeclarationSyntax>())
+                {
+                    if (!parentClassDeclarationSyntax.Modifiers.Any(x => x.IsKind(SyntaxKind.PartialKeyword)))
+                    {
+                        anyParentIsNotPartial = true;
+                        context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM105_ClassRequiresPartialKeyword, parentClassDeclarationSyntax.Identifier.GetLocation(), parentClassDeclarationSyntax.Identifier.Text));
+                    }
+                }
+
+                if (!mapper.DeclaringSyntaxReferences.Any(x => x.GetSyntax() is BaseTypeDeclarationSyntax declaration && declaration.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))))
+                {
+                    foreach (Location location in mapper.Locations)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM105_ClassRequiresPartialKeyword, location, mapper.Name));
+                    }
+                    continue;
+                }
+
+                if(anyParentIsNotPartial)
+                    continue;
+
                 var code = GenerateMapperClass(compilation, mapper, context);
                 context.AddSource($"{mapper.OriginalDefinition}.g.cs", SourceText.From(code, Encoding.UTF8));
             }

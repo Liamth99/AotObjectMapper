@@ -95,6 +95,15 @@ public static class AOMDiagnostics
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    public const string ClassRequiresPartialKeywordId = "AOM105";
+    public static readonly DiagnosticDescriptor AOM105_ClassRequiresPartialKeyword = new (
+        id: ClassRequiresPartialKeywordId,
+        title: "Class must contain the partial keyword",
+        messageFormat: "`{0}` must be partial",
+        category: DiagnosticCategories.Usage,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     
     // Invalid Mapper Configuration
     // 200 - 299
