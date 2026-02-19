@@ -97,29 +97,52 @@ public class MapperGenerator : IIncrementalGenerator
             methodGenInfos.Add(info);
         }
 
-        using (isb.IndentBlock($"namespace {@namespace}"))
+        if (!string.IsNullOrWhiteSpace(@namespace))
         {
-            foreach (var classDec in classNests.Take(classNests.Length - 1))
-            {
-                isb.AppendLine($"public partial class {classDec}");
-                isb.AppendLine("{");
-                isb.IndentLevel++;
-            }
+            isb.AppendLine($"namespace {@namespace}");
+            isb.AppendLine("{");
+            isb.IndentLevel++;
+        }
 
-            List<string> interfaces = [];
+        foreach (var classDec in classNests.Take(classNests.Length - 1))
+        {
+            isb.AppendLine($"public partial class {classDec}");
+            isb.AppendLine("{");
+            isb.IndentLevel++;
+        }
 
+        List<string> interfaces      = [];
+
+        foreach (var methodGenInfo in methodGenInfos)
+        {
+            interfaces.Add($"global::AotObjectMapper.Abstractions.Models.IMapper<global::{methodGenInfo.SourceType.ToDisplayString()}, global::{methodGenInfo.DestinationType.ToDisplayString()}>");
+        }
+
+        string interfaceString = interfaces.Count > 0 ? $" : {string.Join(", ", interfaces)}" : string.Empty;
+
+        using (isb.IndentBlock($"public partial class {mapper.Name}{interfaceString}"))
+        {
             foreach (var methodGenInfo in methodGenInfos)
             {
-                interfaces.Add($"global::AotObjectMapper.Abstractions.Models.IMapper<global::{methodGenInfo.SourceType.ToDisplayString()}, global::{methodGenInfo.DestinationType.ToDisplayString()}>");
+                try
+                {
+                    GenerateMapperMethod(compilation, isb, methodGenInfo);
+                    isb.AppendLine();
+                }
+                catch (Exception ex)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM000_UnhandledExceptionId, methodGenInfo.MapAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation(), mapper.ToDisplayString(), ex));
+                }
             }
 
-            using (isb.IndentBlock($"public partial class {mapper.Name} : {string.Join(", ", interfaces)}"))
+            isb.AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
+            using (isb.IndentBlock("public static partial class Utils"))
             {
                 foreach (var methodGenInfo in methodGenInfos)
                 {
                     try
                     {
-                        GenerateMapperMethod(compilation, isb, methodGenInfo);
+                        GeneratePopulationMethod(compilation, isb, methodGenInfo);
                         isb.AppendLine();
                     }
                     catch (Exception ex)
@@ -127,30 +150,14 @@ public class MapperGenerator : IIncrementalGenerator
                         context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM000_UnhandledExceptionId, methodGenInfo.MapAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation(), mapper.ToDisplayString(), ex));
                     }
                 }
-
-                isb.AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
-                using (isb.IndentBlock("public static partial class Utils"))
-                {
-                    foreach (var methodGenInfo in methodGenInfos)
-                    {
-                        try
-                        {
-                            GeneratePopulationMethod(compilation, isb, methodGenInfo);
-                            isb.AppendLine();
-                        }
-                        catch (Exception ex)
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM000_UnhandledExceptionId, methodGenInfo.MapAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation(), mapper.ToDisplayString(), ex));
-                        }
-                    }
-                }
             }
+        }
 
-            for (; isb.IndentLevel > 1;)
-            {
-                isb.IndentLevel--;
-                isb.AppendLine("}");
-            }
+        // Close the rest of the code blocks
+        for (; isb.IndentLevel > 0;)
+        {
+            isb.IndentLevel--;
+            isb.AppendLine("}");
         }
 
         return isb.ToString();
