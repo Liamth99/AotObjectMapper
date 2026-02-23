@@ -10,6 +10,7 @@
 
 ### New Rules
 
- Rule ID   | Category | Severity | Notes                                             
------------|----------|----------|---------------------------------------------------
- AOM105    | Usage    | Error    | Class must contain the partial keyword            
+ Rule ID   | Category      | Severity    | Notes                                             
+-----------|---------------|-------------|---------------------------------------------------
+ AOM105    | Usage         | Error       | Class must contain the partial keyword            
+ AOM207    | Configuration | Error       | No accessible constructor or factory method       

@@ -1,16 +1,23 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 using Xunit;
 
 namespace AotObjectMapper.Mapper.Tests.DiagnosticTests;
 
-public class MapperMissingPartialTests
+public class MapperMissingPartialTests : AOMVerifierBase
 {
     [Fact]
-    public void GenerateMapperAttribute_NoPartialKeyWord_AOM105()
+    public async Task GenerateMapperAttribute_NoPartialKeyWord_AOM105()
     {
         const string code =
         """
+        using System;
+        using AotObjectMapper.Abstractions.Attributes;
+        using AotObjectMapper.Abstractions.Enums;
+        using AotObjectMapper.Abstractions.Models;
+        
         public partial class Top
         {
             [GenerateMapper]
@@ -18,19 +25,19 @@ public class MapperMissingPartialTests
         }
         """;
 
-        var test = new CSharpSourceGeneratorTest<MapperGenerator, DefaultVerifier>()
-        {
-            TestState = { Sources = { code, }, },
-        };
-
-        test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError(AOMDiagnostics.ClassRequiresPartialKeywordId).WithLocation(0).WithArguments("Mapper"));
+        await VerifyGeneratorDiagnosticsAsync(code, [DiagnosticResult.CompilerError(AOMDiagnostics.ClassRequiresPartialKeywordId).WithLocation(0).WithArguments("Mapper")], cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
-    public void GenerateMapperAttribute_ParentClassNoPartialKeyWord_AOM105()
+    public async Task GenerateMapperAttribute_ParentClassNoPartialKeyWord_AOM105()
     {
         const string code =
         """
+        using System;
+        using AotObjectMapper.Abstractions.Attributes;
+        using AotObjectMapper.Abstractions.Enums;
+        using AotObjectMapper.Abstractions.Models;
+        
         public class {|#0:Top|}
         {
             [GenerateMapper]
@@ -38,19 +45,25 @@ public class MapperMissingPartialTests
         }
         """;
 
-        var test = new CSharpSourceGeneratorTest<MapperGenerator, DefaultVerifier>()
-        {
-            TestState = { Sources = { code, }, },
-        };
 
-        test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError(AOMDiagnostics.ClassRequiresPartialKeywordId).WithLocation(0).WithArguments("Top"));
+        List<DiagnosticResult> expectedDiagnostics =
+        [
+            DiagnosticResult.CompilerError(AOMDiagnostics.ClassRequiresPartialKeywordId).WithLocation(0).WithArguments("Top")
+        ];
+
+        await VerifyGeneratorDiagnosticsAsync(code, expectedDiagnostics, cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
-    public void GenerateMapperAttribute_MultipleClassesNoPartialKeyWord_AOM105()
+    public async Task GenerateMapperAttribute_MultipleClassesNoPartialKeyWord_AOM105()
     {
         const string code =
         """
+        using System;
+        using AotObjectMapper.Abstractions.Attributes;
+        using AotObjectMapper.Abstractions.Enums;
+        using AotObjectMapper.Abstractions.Models;
+        
         public class {|#0:Top|}
         {
             [GenerateMapper]
@@ -58,12 +71,13 @@ public class MapperMissingPartialTests
         }
         """;
 
-        var test = new CSharpSourceGeneratorTest<MapperGenerator, DefaultVerifier>()
-        {
-            TestState = { Sources = { code, }, },
-        };
+        List<DiagnosticResult> expectedDiagnostics =
+            [
+                DiagnosticResult.CompilerError(AOMDiagnostics.ClassRequiresPartialKeywordId).WithLocation(0).WithArguments("Top"),
+                DiagnosticResult.CompilerError(AOMDiagnostics.ClassRequiresPartialKeywordId).WithLocation(1).WithArguments("Mapper")
+            ];
 
-        test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError(AOMDiagnostics.ClassRequiresPartialKeywordId).WithLocation(0).WithArguments("Top"));
-        test.ExpectedDiagnostics.Add(DiagnosticResult.CompilerError(AOMDiagnostics.ClassRequiresPartialKeywordId).WithLocation(1).WithArguments("Mapper"));
+        await VerifyGeneratorDiagnosticsAsync(code, expectedDiagnostics, cancellationToken: TestContext.Current.CancellationToken);
+
     }
 }

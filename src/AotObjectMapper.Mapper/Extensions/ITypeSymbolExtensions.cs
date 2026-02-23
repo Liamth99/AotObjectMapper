@@ -9,7 +9,6 @@ public static class ITypeSymbolExtensions
 {
     extension(ITypeSymbol type)
     {
-
         public IEnumerable<IPropertySymbol> GetAllReadableProperties()
         {
             var seen = new HashSet<IPropertySymbol>(SymbolEqualityComparer.Default);
@@ -79,25 +78,42 @@ public static class ITypeSymbolExtensions
             return false;
         }
 
-        public string BlankTypeConstructor(MethodGenerationInfo? info, out (string type, string argName)[] arguments)
+        public bool TryGetBlankTypeConstructor(MethodGenerationInfo? info, out string ctorCode, out (string type, string argName)[] arguments)
         {
+            if (type is not INamedTypeSymbol namedType)
+            {
+                arguments = [];
+                ctorCode  = string.Empty;
+                return false;
+            }
+
             if (info?.FactoryMethod is not null)
             {
                 if (info.FactoryMethod?.Parameters.Length is 1)
                 {
                     arguments = [new("global::AotObjectMapper.Abstractions.Models.MapperContext" ,"ctx")];
-                    return $"{info.FactoryMethod.Name}(ctx)";
+                    ctorCode  = $"{info.FactoryMethod.Name}(ctx)";
+                    return true;
                 }
                 else
                 {
                     arguments = [];
-                    return $"{info.FactoryMethod.Name}()";
+                    ctorCode  = $"{info.FactoryMethod.Name}()";
+                    return true;
                 }
 
             }
 
             arguments = [];
-            return $"new global::{type.ToDisplayString()}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
+
+            if (namedType.Constructors.Any(x => x.DeclaredAccessibility is Accessibility.Public && x.Parameters.Length is 0))
+            {
+                ctorCode = $"new global::{type.ToDisplayString()}() {{ {string.Join(" ", type.GetMembers().OfType<IPropertySymbol>().Where(p => p.SetMethod is not null && p.IsRequired).Select(x => $"{x.Name} = {(x.Type.IsReferenceType ? "null!" : "default")},"))} }}";
+                return true;
+            }
+
+            ctorCode = string.Empty;
+            return false;
         }
     }
 }

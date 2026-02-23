@@ -76,7 +76,7 @@ public sealed class MethodGenerationInfo
     public bool ThrowExceptionOnUnmappedEnum { get; }
 
 
-    public MethodGenerationInfo(ITypeSymbol mapperType, AttributeData mapAttr)
+    public MethodGenerationInfo(Compilation compilation, ITypeSymbol mapperType, AttributeData mapAttr)
     {
         MapperType      = (INamedTypeSymbol)mapperType;
         SourceType      = (INamedTypeSymbol)mapAttr.AttributeClass!.TypeArguments[0];
@@ -125,7 +125,7 @@ public sealed class MethodGenerationInfo
         ForMemberMethods = UserDefinedMapperMethods.GetSymbolsWithSingleGenericAttribute(nameof(ForMemberAttribute<,>), SourceType, DestinationType).ToArray();
     }
 
-    public IEnumerable<(IPropertySymbol propertySymbol, string assignemnt)> GeneratePropertyAssignments(Compilation compilation)
+    public IEnumerable<(IPropertySymbol propertySymbol, string assignemnt)> GeneratePropertyAssignments(Compilation compilation, SourceProductionContext context)
     {
         List<(IPropertySymbol propertySymbol, string assignemnt)> assignments = [];
 
@@ -137,7 +137,7 @@ public sealed class MethodGenerationInfo
             if (IgnoredMembers.Any(x => x.Equals(destProp.Name)))
                 continue;
 
-            if(TryBuildAssignmentExpression(compilation, srcProp.Type ,destProp.Type, $"src.{srcProp.Name}", srcProp.NullableAnnotation is not NullableAnnotation.None, out var expression))
+            if(TryBuildAssignmentExpression(compilation, context, srcProp.Type ,destProp.Type, $"src.{srcProp.Name}", srcProp.NullableAnnotation is not NullableAnnotation.None, out var expression))
                 assignments.Add(new (destProp, expression));
         }
 
@@ -166,7 +166,7 @@ public sealed class MethodGenerationInfo
         return assignments;
     }
 
-    private bool TryBuildAssignmentExpression(Compilation compilation, ITypeSymbol sourceType, ITypeSymbol destinationType, string sourceExpression, bool sourceIsNullable, out string assignmentExpression)
+    private bool TryBuildAssignmentExpression(Compilation compilation, SourceProductionContext context, ITypeSymbol sourceType, ITypeSymbol destinationType, string sourceExpression, bool sourceIsNullable, out string assignmentExpression)
     {
         // exact type match
         if (sourceType.Equals(destinationType, SymbolEqualityComparer.Default))
@@ -185,8 +185,15 @@ public sealed class MethodGenerationInfo
         {
             if (PreserveReferences)
             {
-                var ctor = otherMapper.AttributeClass!.TypeArguments[2].BlankTypeConstructor(this, out var ctorArgs);
-                assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.Utils.Populate)";
+                if(otherMapper.AttributeClass!.TypeArguments[2].TryGetBlankTypeConstructor(this, out var ctor, out var ctorArgs))
+                    assignmentExpression = $"ctx.GetOrMapObject<{otherMapper.AttributeClass!.TypeArguments[1].ToDisplayString()}, {otherMapper.AttributeClass!.TypeArguments[2].ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, {otherMapper.AttributeClass!.TypeArguments[0].Name}.Utils.Populate)";
+
+                else
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM207_NoConstructor, MapAttribute.ApplicationSyntaxReference.GetSyntax().GetLocation(), otherMapper.AttributeClass!.TypeArguments[1].Name));
+                    assignmentExpression = string.Empty;
+                    return false;
+                }
             }
             else
             {
@@ -205,8 +212,15 @@ public sealed class MethodGenerationInfo
 
             if (PreserveReferences)
             {
-                var ctor = method.destination.BlankTypeConstructor(this, out var ctorArgs);
-                assignmentExpression = $"ctx.GetOrMapObject<global::{method.source.ToDisplayString()}, global::{method.destination.ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, global::{MapperType.ToDisplayString()}.Utils.Populate)";
+                if(method.destination.TryGetBlankTypeConstructor(this, out var ctor, out var ctorArgs))
+                    assignmentExpression = $"ctx.GetOrMapObject<global::{method.source.ToDisplayString()}, global::{method.destination.ToDisplayString()}>({sourceExpression}, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, global::{MapperType.ToDisplayString()}.Utils.Populate)";
+
+                else
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM207_NoConstructor, MapAttribute.ApplicationSyntaxReference.GetSyntax().GetLocation(), destinationType.Name));
+                    assignmentExpression = string.Empty;
+                    return false;
+                }
             }
             else
             {
@@ -230,7 +244,7 @@ public sealed class MethodGenerationInfo
         // IEnumerable
         if(TryGetEnumerableInitializationInfo(sourceType, out var sourceElementType))
             if(TryGetEnumerableInitializationInfo(destinationType, out var destinationElementType))
-                if (TryBuildAssignmentExpression(compilation, sourceElementType, destinationElementType, "x", destinationElementType.NullableAnnotation is not NullableAnnotation.None, out var elementExpression))
+                if (TryBuildAssignmentExpression(compilation, context, sourceElementType, destinationElementType, "x", destinationElementType.NullableAnnotation is not NullableAnnotation.None, out var elementExpression))
                     if(TryGetEnumerationInitialization(destinationType, sourceElementType, destinationElementType, sourceExpression, elementExpression, out string selectExpression))
                     {
                         assignmentExpression = $"{selectExpression}";

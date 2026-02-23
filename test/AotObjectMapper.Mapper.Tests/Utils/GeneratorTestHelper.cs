@@ -11,7 +11,7 @@ namespace AotObjectMapper.Mapper.Tests.Utils;
 
 public static class GeneratorTestHelper
 {
-    private static readonly MetadataReference[] References;
+    public static MetadataReference[] References { get; private set; }
 
     static GeneratorTestHelper()
     {
