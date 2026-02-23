@@ -190,7 +190,7 @@ public sealed class MethodGenerationInfo
 
                 else
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM207_NoConstructor, MapAttribute.ApplicationSyntaxReference.GetSyntax().GetLocation(), otherMapper.AttributeClass!.TypeArguments[1].Name));
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM207_NoConstructor, MapAttribute.ApplicationSyntaxReference!.GetSyntax().GetLocation(), otherMapper.AttributeClass!.TypeArguments[1].Name));
                     assignmentExpression = string.Empty;
                     return false;
                 }
@@ -217,7 +217,7 @@ public sealed class MethodGenerationInfo
 
                 else
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM207_NoConstructor, MapAttribute.ApplicationSyntaxReference.GetSyntax().GetLocation(), destinationType.Name));
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM207_NoConstructor, MapAttribute.ApplicationSyntaxReference!.GetSyntax().GetLocation(), destinationType.Name));
                     assignmentExpression = string.Empty;
                     return false;
                 }

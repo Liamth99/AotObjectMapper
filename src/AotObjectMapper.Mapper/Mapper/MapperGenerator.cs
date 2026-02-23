@@ -195,9 +195,9 @@ public class MapperGenerator : IIncrementalGenerator
 
         if (!info.DestinationType.TryGetBlankTypeConstructor(info, out var ctor, out var ctorArgs) && !info.DestinationType.IsAbstract && info.DestinationType.TypeKind is not TypeKind.Interface)
         {
-            AttributeSyntax declearation = (AttributeSyntax)info.MapAttribute.ApplicationSyntaxReference.GetSyntax();
+            AttributeSyntax declaration = (AttributeSyntax)info.MapAttribute.ApplicationSyntaxReference!.GetSyntax();
 
-            var destTypeNode = declearation.DescendantNodes().OfType<IdentifierNameSyntax>().ElementAt(1);
+            var destTypeNode = declaration.DescendantNodes().OfType<IdentifierNameSyntax>().ElementAt(1);
 
             context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM207_NoConstructor, destTypeNode.GetLocation(), info.DestinationType.Name));
             return;

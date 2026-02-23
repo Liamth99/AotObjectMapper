@@ -98,7 +98,7 @@ public static class ITypeSymbolExtensions
                 else
                 {
                     arguments = [];
-                    ctorCode  = $"{info.FactoryMethod.Name}()";
+                    ctorCode  = $"{info.FactoryMethod!.Name}()";
                     return true;
                 }
 
