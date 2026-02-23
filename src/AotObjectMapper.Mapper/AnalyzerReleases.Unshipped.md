@@ -14,7 +14,6 @@
  AOM204    | Design        | Warning  | Potential recursive mapping detected                                      
  AOM205    | Usage         | Error    | Mapper should only have one default FormatProvider                        
  AOM206    | Usage         | Error    | Mapper should only have one FormatProvider for type pair                  
- AOM207    | Configuration | Error    | No accessible constructor or factory method                               
  AOM208    | Configuration | Warning  | Ignored member does not exist                                             
  AOM209    | Configuration | Error    | Duplicate configuration for member                                        
  AOM300    | TypeSafety    | Warning  | No map found for destination type                                         

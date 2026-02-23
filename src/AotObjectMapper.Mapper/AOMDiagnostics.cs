@@ -178,7 +178,7 @@ public static class AOMDiagnostics
         title: "No accessible constructor or factory method",
         messageFormat: "No accessible constructor or factory method found for {0}",
         category: DiagnosticCategories.Configuration, 
-        defaultSeverity: DiagnosticSeverity.Error, 
+        defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true); 
 
     public const string IgnoredMemberDoesNotExistId = "AOM208";

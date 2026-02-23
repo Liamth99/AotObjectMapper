@@ -116,7 +116,7 @@ public class MapperGenerator : IIncrementalGenerator
 
         foreach (var mapAttr in mapAttributes)
         {
-            var info = new MethodGenerationInfo((INamedTypeSymbol)mapper, mapAttr);
+            var info = new MethodGenerationInfo(compilation, (INamedTypeSymbol)mapper, mapAttr);
 
             methodGenInfos.Add(info);
         }
@@ -135,7 +135,7 @@ public class MapperGenerator : IIncrementalGenerator
             isb.IndentLevel++;
         }
 
-        List<string> interfaces      = [];
+        List<string> interfaces = [];
 
         foreach (var methodGenInfo in methodGenInfos)
         {
@@ -150,7 +150,7 @@ public class MapperGenerator : IIncrementalGenerator
             {
                 try
                 {
-                    GenerateMapperMethod(compilation, isb, methodGenInfo);
+                    GenerateMapperMethod(compilation, context, isb, methodGenInfo);
                     isb.AppendLine();
                 }
                 catch (Exception ex)
@@ -166,7 +166,7 @@ public class MapperGenerator : IIncrementalGenerator
                 {
                     try
                     {
-                        GeneratePopulationMethod(compilation, isb, methodGenInfo);
+                        GeneratePopulationMethod(compilation, context, isb, methodGenInfo);
                         isb.AppendLine();
                     }
                     catch (Exception ex)
@@ -187,11 +187,21 @@ public class MapperGenerator : IIncrementalGenerator
         return isb.ToString();
     }
 
-    private static void GenerateMapperMethod(Compilation compilation, IndentedStringBuilder isb, MethodGenerationInfo info)
+    private static void GenerateMapperMethod(Compilation compilation, SourceProductionContext context, IndentedStringBuilder isb, MethodGenerationInfo info)
     {
-        var propertyAssignments = info.GeneratePropertyAssignments(compilation).ToArray();
+        var propertyAssignments = info.GeneratePropertyAssignments(compilation, context).ToArray();
 
         GenerateMethodDocs(info, isb);
+
+        if (!info.DestinationType.TryGetBlankTypeConstructor(info, out var ctor, out var ctorArgs) && !info.DestinationType.IsAbstract && info.DestinationType.TypeKind is not TypeKind.Interface)
+        {
+            AttributeSyntax declaration = (AttributeSyntax)info.MapAttribute.ApplicationSyntaxReference!.GetSyntax();
+
+            var destTypeNode = declaration.DescendantNodes().OfType<IdentifierNameSyntax>().ElementAt(1);
+
+            context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM207_NoConstructor, destTypeNode.GetLocation(), info.DestinationType.Name));
+            return;
+        }
 
         using (isb.IndentBlock($"public static global::{info.DestinationType.ToDisplayString()} Map(global::{info.SourceType.ToDisplayString()} src, global::AotObjectMapper.Abstractions.Models.MapperContextBase? ctx = null)"))
         {
@@ -206,8 +216,6 @@ public class MapperGenerator : IIncrementalGenerator
 
                 isb.AppendLine("ctx ??= new global::AotObjectMapper.Abstractions.Models.MapperContext();");
 
-                var ctor = info.DestinationType.BlankTypeConstructor(info, out var ctorArgs);
-
                 isb.AppendLine($"return ctx.GetOrMapObject<global::{info.SourceType.ToDisplayString()}, global::{info.DestinationType.ToDisplayString()}>(src, ctx, static ({(ctorArgs.Any() ? string.Join(", ", ctorArgs.Select(x => $"{x.type} {x.argName}")) : "")}) => {ctor}, Utils.Populate);");
             }
             else
@@ -218,7 +226,7 @@ public class MapperGenerator : IIncrementalGenerator
                 isb.AppendLine();
                 isb.AppendLine("// Pre-Map Actions");
                 isb.AppendLine("ctx.IncrementDepth();");
-                isb.AppendLine($"var dest = {info.DestinationType.BlankTypeConstructor(info, out _)};");
+                isb.AppendLine($"var dest = {ctor};");
 
                 foreach (var mapMethodInfo in info.PreMapMethods.OrderBy(x => x.Attribute.ConstructorArguments[0].Value))
                 {
@@ -284,9 +292,9 @@ public class MapperGenerator : IIncrementalGenerator
         }
     }
 
-    private static void GeneratePopulationMethod(Compilation compilation, IndentedStringBuilder isb , MethodGenerationInfo info)
+    private static void GeneratePopulationMethod(Compilation compilation, SourceProductionContext context, IndentedStringBuilder isb , MethodGenerationInfo info)
     {
-        var propertyAssignments = info.GeneratePropertyAssignments(compilation).ToArray();
+        var propertyAssignments = info.GeneratePropertyAssignments(compilation, context).ToArray();
 
         isb.AppendLine("/// Populates an existing object, Designed for internal use.");
         isb.AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");
