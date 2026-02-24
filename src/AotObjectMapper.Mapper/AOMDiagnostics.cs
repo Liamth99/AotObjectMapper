@@ -59,23 +59,14 @@ public static class AOMDiagnostics
         defaultSeverity: DiagnosticSeverity.Error, 
         isEnabledByDefault: true); 
     
-    public const string MethodHasIncorrectSignatureSourceParameterId = "AOM101";
-    public static readonly DiagnosticDescriptor AOM101_MethodHasIncorrectSignatureSourceParameter = new (
-        id: MethodHasIncorrectSignatureSourceParameterId, 
-        title: "Method has incorrect source parameter type",
-        messageFormat: "First parameter for`{0}` should be of type `{1}`",
+    public const string MethodHasIncorrectSignatureParameterTypeId = "AOM101";
+    public static readonly DiagnosticDescriptor AOM101_MethodHasIncorrectSignatureParameterType = new (
+        id: MethodHasIncorrectSignatureParameterTypeId,
+        title: "Method has incorrect parameter type",
+        messageFormat: "{0} parameter for `{1}` should be of type `{2}`", // Format is {0}: param position first, second ect. {1} Method. {2} expected type.
         category: DiagnosticCategories.Usage, 
         defaultSeverity: DiagnosticSeverity.Error, 
-        isEnabledByDefault: true); 
-    
-    public const string MethodHasIncorrectSignatureMapperContextId = "AOM102";
-    public static readonly DiagnosticDescriptor AOM102_MethodHasIncorrectSignatureMapperContext = new (
-        id: MethodHasIncorrectSignatureMapperContextId, 
-        title: "Method has incorrect MapperContext parameter type",
-        messageFormat: "Second parameter for `{0}` should either be removed or be of type `MapperContextBase`",
-        category: DiagnosticCategories.Usage, 
-        defaultSeverity: DiagnosticSeverity.Error, 
-        isEnabledByDefault: true); 
+        isEnabledByDefault: true);
     
     public const string MethodDoesNotRequireContextId = "AOM103";
     public static readonly DiagnosticDescriptor AOM103_MethodDoesNotRequireContext = new (
