@@ -116,7 +116,7 @@ public class MapperGenerator : IIncrementalGenerator
 
         foreach (var mapAttr in mapAttributes)
         {
-            var info = new MethodGenerationInfo(compilation, (INamedTypeSymbol)mapper, mapAttr);
+            var info = new MethodGenerationInfo(compilation, context, (INamedTypeSymbol)mapper, mapAttr);
 
             methodGenInfos.Add(info);
         }
@@ -189,7 +189,7 @@ public class MapperGenerator : IIncrementalGenerator
 
     private static void GenerateMapperMethod(Compilation compilation, SourceProductionContext context, IndentedStringBuilder isb, MethodGenerationInfo info)
     {
-        var propertyAssignments = info.GeneratePropertyAssignments(compilation, context).ToArray();
+        var propertyAssignments = info.PropertyAssignments;
 
         GenerateMethodDocs(info, isb);
 
@@ -294,7 +294,7 @@ public class MapperGenerator : IIncrementalGenerator
 
     private static void GeneratePopulationMethod(Compilation compilation, SourceProductionContext context, IndentedStringBuilder isb , MethodGenerationInfo info)
     {
-        var propertyAssignments = info.GeneratePropertyAssignments(compilation, context).ToArray();
+        var propertyAssignments = info.PropertyAssignments;
 
         isb.AppendLine("/// Populates an existing object, Designed for internal use.");
         isb.AppendLine("[global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]");

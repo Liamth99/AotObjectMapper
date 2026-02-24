@@ -70,6 +70,8 @@ public sealed class MethodGenerationInfo
 
     public string[] IgnoredMembers { get; }
 
+    public (IPropertySymbol propertySymbol, string assignemnt)[] PropertyAssignments { get; }
+
     public bool AllowIConvertable            { get; }
     public bool SuppressNullWarnings         { get; }
     public bool PreserveReferences           { get; }
@@ -77,7 +79,7 @@ public sealed class MethodGenerationInfo
     public bool ThrowExceptionOnUnmappedEnum { get; }
 
 
-    public MethodGenerationInfo(Compilation compilation, ITypeSymbol mapperType, AttributeData mapAttr)
+    public MethodGenerationInfo(Compilation compilation, SourceProductionContext context, ITypeSymbol mapperType, AttributeData mapAttr)
     {
         MapperType      = (INamedTypeSymbol)mapperType;
         SourceType      = (INamedTypeSymbol)mapAttr.AttributeClass!.TypeArguments[0];
@@ -124,9 +126,11 @@ public sealed class MethodGenerationInfo
         FactoryMethod = UserDefinedMapperMethods.SingleOrDefault(method => method.GetGenericAttribute(nameof(UseFactoryAttribute<>), DestinationType) is not null);
 
         ForMemberMethods = UserDefinedMapperMethods.GetSymbolsWithSingleGenericAttribute(nameof(ForMemberAttribute<,>), SourceType, DestinationType).ToArray();
+
+        PropertyAssignments = GeneratePropertyAssignments(compilation, context);
     }
 
-    public IEnumerable<(IPropertySymbol propertySymbol, string assignemnt)> GeneratePropertyAssignments(Compilation compilation, SourceProductionContext context)
+    private (IPropertySymbol propertySymbol, string assignemnt)[] GeneratePropertyAssignments(Compilation compilation, SourceProductionContext context)
     {
         List<(IPropertySymbol propertySymbol, string assignemnt)> assignments = [];
 
@@ -214,7 +218,7 @@ public sealed class MethodGenerationInfo
             }
         }
 
-        return assignments;
+        return assignments.ToArray();
     }
 
     private bool TryBuildAssignmentExpression(Compilation compilation, SourceProductionContext context, ITypeSymbol sourceType, ITypeSymbol destinationType, string sourceExpression, bool sourceIsNullable, out string assignmentExpression)
