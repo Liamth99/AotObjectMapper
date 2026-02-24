@@ -2,13 +2,8 @@
 
  Rule ID   | Category      | Severity | Notes                                                                     
 -----------|---------------|----------|---------------------------------------------------------------------------
- AOM100    | Usage         | Error    | Method has incorrect return type                                          
- AOM101    | Usage         | Error    | Method has incorrect source parameter type                                
- AOM102    | Usage         | Error    | Method has incorrect MapperContext parameter type                         
  AOM103    | Performance   | Warning  | Method does not require MapperContext and the parameter should be removed 
- AOM104    | Usage         | Error    | Method must be static                                                     
  AOM200    | Configuration | Error    | Maps must be distinct                                                     
- AOM201    | Configuration | Error    | Member names should be valid                                              
  AOM202    | Design        | Warning  | Prefer using nameof() over raw string                                     
  AOM203    | Usage         | Error    | UseFormatProvider destination type should be valid type                   
  AOM204    | Design        | Warning  | Potential recursive mapping detected                                      
