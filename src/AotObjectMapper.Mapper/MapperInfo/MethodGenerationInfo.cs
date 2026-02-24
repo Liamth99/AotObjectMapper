@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -69,6 +70,8 @@ public sealed class MethodGenerationInfo
 
     public string[] IgnoredMembers { get; }
 
+    public (IPropertySymbol propertySymbol, string assignemnt)[] PropertyAssignments { get; }
+
     public bool AllowIConvertable            { get; }
     public bool SuppressNullWarnings         { get; }
     public bool PreserveReferences           { get; }
@@ -76,7 +79,7 @@ public sealed class MethodGenerationInfo
     public bool ThrowExceptionOnUnmappedEnum { get; }
 
 
-    public MethodGenerationInfo(Compilation compilation, ITypeSymbol mapperType, AttributeData mapAttr)
+    public MethodGenerationInfo(Compilation compilation, SourceProductionContext context, ITypeSymbol mapperType, AttributeData mapAttr)
     {
         MapperType      = (INamedTypeSymbol)mapperType;
         SourceType      = (INamedTypeSymbol)mapAttr.AttributeClass!.TypeArguments[0];
@@ -123,9 +126,11 @@ public sealed class MethodGenerationInfo
         FactoryMethod = UserDefinedMapperMethods.SingleOrDefault(method => method.GetGenericAttribute(nameof(UseFactoryAttribute<>), DestinationType) is not null);
 
         ForMemberMethods = UserDefinedMapperMethods.GetSymbolsWithSingleGenericAttribute(nameof(ForMemberAttribute<,>), SourceType, DestinationType).ToArray();
+
+        PropertyAssignments = GeneratePropertyAssignments(compilation, context);
     }
 
-    public IEnumerable<(IPropertySymbol propertySymbol, string assignemnt)> GeneratePropertyAssignments(Compilation compilation, SourceProductionContext context)
+    private (IPropertySymbol propertySymbol, string assignemnt)[] GeneratePropertyAssignments(Compilation compilation, SourceProductionContext context)
     {
         List<(IPropertySymbol propertySymbol, string assignemnt)> assignments = [];
 
@@ -143,7 +148,57 @@ public sealed class MethodGenerationInfo
 
         foreach (var mapToMethod in ForMemberMethods)
         {
-            if(!DestinationProperties.TryGetValue((string)mapToMethod.Attribute.ConstructorArguments[0].Value!, out var destProp))
+            var destPropName = (string)mapToMethod.Attribute.ConstructorArguments[0].Value!;
+
+            if(!DestinationProperties.TryGetValue(destPropName, out var destProp))
+            {
+                var attributeSyntax = (AttributeSyntax)mapToMethod.Attribute.ApplicationSyntaxReference!.GetSyntax();
+
+                context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM201_MemberNamesShouldBeValid, attributeSyntax.ArgumentList!.Arguments[0].GetLocation(), destPropName, DestinationType.Name));
+                continue;
+            }
+
+            bool hasError = false;
+
+            if (!mapToMethod.Symbol.IsStatic)
+            {
+                foreach (var location in mapToMethod.Symbol.Locations)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM104_MethodHasIncorrectSignatureNotStatic, location ,mapToMethod.Symbol.Name));
+                }
+                hasError = true;
+            }
+
+            var sourceType = mapToMethod.Attribute.AttributeClass!.TypeArguments[0];
+
+            if (mapToMethod.Symbol.Parameters.Length is 0 || !mapToMethod.Symbol.Parameters[0].Type.Equals(sourceType, SymbolEqualityComparer.Default))
+            {
+                foreach (var location in mapToMethod.Symbol.Parameters[0].Locations)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, location, "First", mapToMethod.Symbol.Name, sourceType.Name));
+                }
+                hasError = true;
+            }
+
+            if(mapToMethod.Symbol.Parameters.Length > 1 && !mapToMethod.Symbol.Parameters[1].Type.ToDisplayString().Equals("AotObjectMapper.Abstractions.Models.MapperContextBase", StringComparison.InvariantCulture))
+            {
+                foreach (var location in mapToMethod.Symbol.Parameters[1].Locations)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, location, "Second", mapToMethod.Symbol.Name, "MapperContextBase"));
+                }
+                hasError = true;
+            }
+
+            if(!destProp.Type.Equals(mapToMethod.Symbol.ReturnType, SymbolEqualityComparer.Default))
+            {
+                foreach (var location in mapToMethod.Symbol.Locations)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM100_MethodHasIncorrectSignatureReturnType, location, mapToMethod.Symbol.Name, destProp.Type.Name));
+                }
+                hasError = true;
+            }
+
+            if(hasError)
                 continue;
 
             assignments.Add(new (destProp, $"{mapToMethod.Symbol.Name}(src{(mapToMethod.Symbol.Parameters.Length is 2 ? ", ctx" : "")})"));
@@ -163,7 +218,7 @@ public sealed class MethodGenerationInfo
             }
         }
 
-        return assignments;
+        return assignments.ToArray();
     }
 
     private bool TryBuildAssignmentExpression(Compilation compilation, SourceProductionContext context, ITypeSymbol sourceType, ITypeSymbol destinationType, string sourceExpression, bool sourceIsNullable, out string assignmentExpression)
