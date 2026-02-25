@@ -17,7 +17,7 @@ public partial class IEnumerableTests
     public partial class CompanyMapper_SkipPre
     {
         [PreMapQuery<User, UserDto>]
-        public static IEnumerable<User> SkipUser(IEnumerable<User> users, MapperContext ctx) => users.Where(x => x.FirstName is not "skip pre");
+        public static IEnumerable<User> SkipUser(IEnumerable<User> users, MapperContextBase ctx) => users.Where(x => x.FirstName is not "skip pre");
     }
 
     [GenerateMapper]
@@ -26,7 +26,7 @@ public partial class IEnumerableTests
     public partial class CompanyMapper_SkipPost
     {
         [PostMapQuery<User, UserDto>]
-        public static IEnumerable<UserDto> SkipUser(IEnumerable<UserDto> users, MapperContext ctx) => users.Where(x => x.FirstName is not "skip post");
+        public static IEnumerable<UserDto> SkipUser(IEnumerable<UserDto> users, MapperContextBase ctx) => users.Where(x => x.FirstName is not "skip post");
     }
 
     [GenerateMapper]

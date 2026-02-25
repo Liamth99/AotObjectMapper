@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using AotObjectMapper.Mapper.Info;
 using Microsoft.CodeAnalysis;
 
 namespace AotObjectMapper.Mapper.Utils;
@@ -38,7 +39,7 @@ public static class GeneratorUtils
             var destinationField = destination.GetMembers().OfType<IFieldSymbol>().SingleOrDefault(x => x.Name == fieldSymbol.Name);
 
             if (destinationField is not null)
-                sb.Append($"{source.ToDisplayString()}.{fieldSymbol.Name} => {destination.ToDisplayString()}.{destinationField.Name}, ");
+                sb.Append($"global::{source.ToDisplayString()}.{fieldSymbol.Name} => global::{destination.ToDisplayString()}.{destinationField.Name}, ");
         }
 
         if(throwIfInvalid)
@@ -68,7 +69,7 @@ public static class GeneratorUtils
             {
                 if (map.AttributeClass!.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.Append($" {sourceType.ToDisplayString()} t{i} => Map(t{i}, ctx),");
+                    sb.Append($" global::{sourceType.ToDisplayString()} t{i} => Map(t{i}, ctx),");
                     i++;
                     break;
                 }
@@ -78,7 +79,7 @@ public static class GeneratorUtils
             {
                 if (mapper.AttributeClass!.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.Append($" {sourceType.ToDisplayString()} t{i} => {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, ctx),");
+                    sb.Append($" global::{sourceType.ToDisplayString()} t{i} => global::{mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, ctx),");
                     i++;
                     break;
                 }
@@ -110,7 +111,7 @@ public static class GeneratorUtils
             {
                 if (map.AttributeClass!.TypeArguments[0].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return Map(t{i}, ctx);");
+                    sb.AppendLine($"if ({sourceObjectName} is global::{sourceType.ToDisplayString()} t{i}) return Map(t{i}, ctx);");
                     i++;
                     break;
                 }
@@ -120,7 +121,7 @@ public static class GeneratorUtils
             {
                 if (mapper.AttributeClass!.TypeArguments[1].Equals(sourceType, SymbolEqualityComparer.Default))
                 {
-                    sb.AppendLine($"if ({sourceObjectName} is {sourceType.ToDisplayString()} t{i}) return {mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, ctx);");
+                    sb.AppendLine($"if ({sourceObjectName} is global::{sourceType.ToDisplayString()} t{i}) return global::{mapper.AttributeClass!.TypeArguments[0].ToDisplayString()}.Map(t{i}, ctx);");
                     i++;
                     break;
                 }
