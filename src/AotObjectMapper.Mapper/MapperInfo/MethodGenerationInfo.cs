@@ -191,10 +191,15 @@ public sealed class MethodGenerationInfo
 
             if(!destProp.Type.Equals(mapToMethod.Symbol.ReturnType, SymbolEqualityComparer.Default))
             {
-                foreach (var location in mapToMethod.Symbol.Locations)
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM100_MethodHasIncorrectSignatureReturnType, location, mapToMethod.Symbol.Name, destProp.Type.Name));
-                }
+                var declaration = mapToMethod
+                                 .Symbol
+                                 .DeclaringSyntaxReferences
+                                 .Select(r => r.GetSyntax(context.CancellationToken))
+                                 .OfType<MethodDeclarationSyntax>()
+                                 .FirstOrDefault();
+
+               context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM100_MethodHasIncorrectSignatureReturnType, declaration.ReturnType.GetLocation(), mapToMethod.Symbol.Name, destProp.Type.Name));
+
                 hasError = true;
             }
 

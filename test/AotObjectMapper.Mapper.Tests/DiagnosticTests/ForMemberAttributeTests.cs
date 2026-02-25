@@ -63,7 +63,7 @@ public class ForMemberAttributeTests : AOMVerifierBase
         public partial class TMapper
         {
             [ForMember<T1, T2>("Id")]
-            private double {|#0:GetId|}(T2 {|#1:src|}, T1 {|#2:ctx|}) => 0;
+            private {|#3:double|} {|#0:GetId|}(T2 {|#1:src|}, T1 {|#2:ctx|}) => 0;
         }
         """;
 
@@ -71,7 +71,7 @@ public class ForMemberAttributeTests : AOMVerifierBase
           code,
           [
               DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureNotStaticId).WithLocation(0).WithArguments("GetId"),
-              DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureReturnTypeId).WithLocation(0).WithArguments("GetId", "Int32"),
+              DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureReturnTypeId).WithLocation(3).WithArguments("GetId", "Int32"),
               DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureParameterTypeId).WithLocation(1).WithArguments("First" ,"GetId", "T1"),
               DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureParameterTypeId).WithLocation(2).WithArguments("Second" ,"GetId", "MapperContextBase"),
           ],
@@ -135,7 +135,7 @@ public class ForMemberAttributeTests : AOMVerifierBase
         public partial class TMapper
         {
             [ForMember<T1, T2>("Id")]
-            private static string {|#0:GetId|}(T1 src) => "";
+            private static {|#0:string|} GetId(T1 src) => "";
         }
         """;
 
