@@ -25,9 +25,6 @@ public class Address
     public string Street  { get; set; } = string.Empty;
     public string City    { get; set; } = string.Empty;
     public string Country { get; set; } = string.Empty;
-
-    // Circular reference back to Person
-    public Person Resident { get; set; } = null!;
 }
 
 public class Company
@@ -40,6 +37,8 @@ public class Company
 
     // Circular reference back to Person
     public Person CEO { get; set; } = null!;
+
+    public IEnumerable<Person> Employees { get; set; } = null!;
 }
 
 public class CompanyMetadata
@@ -75,4 +74,6 @@ public class CompanyDto
     public decimal  AnnualRevenue { get; set; }
 
     public PersonDto CEO { get; set; } = null!;
+
+    public PersonDto[] Employees { get; set; } = null!;
 }

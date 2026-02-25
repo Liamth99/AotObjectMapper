@@ -12,6 +12,7 @@ public partial class MapperlyComplexMapper
     [MapProperty(nameof(@Person.Address.City),   nameof(PersonDto.City))]
     [MapProperty(nameof(@Person.Address.Country), nameof(PersonDto.Country))]
     public partial PersonDto MapPerson(Person source);
+
     public string CombineFullName(Person source) => $"{source.FirstName} {source.LastName}";
 
     [MapProperty(nameof(@Company.Metadata.FoundedAt),     nameof(CompanyDto.FoundedAt))]

@@ -7,7 +7,7 @@ using MappingBenchmarks.Models;
 
 namespace MappingBenchmarks;
 
-[MemoryDiagnoser(displayGenColumns: true)]
+[MemoryDiagnoser(displayGenColumns: false)]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [CategoriesColumn]
 public partial class ComplexBenchmark
@@ -28,23 +28,35 @@ public partial class ComplexBenchmark
                 Street = "Elm Street",
                 City = "Somewhere",
                 Country = "America",
-                Resident = null!,
             },
-            Employer = new Company()
-            {
-                Id = 5,
-                Name = "Company inc.",
-                Metadata = new CompanyMetadata()
-                {
-                    AnnualRevenue = 5,
-                    FoundedAt = new DateTime(2026, 1, 1, 0, 0, 0),
-                },
-                CEO = null!,
-            },
+            Employer = null!,
         };
 
-        _source.Address.Resident = _source;
-        _source.Employer.CEO = _source;
+        var company = new Company()
+        {
+            Id   = 5,
+            Name = "Company inc.",
+            Metadata =
+                new CompanyMetadata()
+                {
+                    AnnualRevenue = 5,
+                    FoundedAt     = new DateTime(2026, 1, 1, 0, 0, 0),
+                },
+            CEO = _source,
+        };
+
+        var secondAddress = new Address() { Street = "Main street", City = "Main city", Country = "Italy?" };
+
+        company.CEO      = _source;
+        _source.Employer = company;
+        company.Employees =
+        [
+            _source,
+            new Person { Id = 2, FirstName = "1", LastName = "1", Address = secondAddress, Employer  = company, },
+            new Person { Id = 3, FirstName = "2", LastName = "2", Address = secondAddress, Employer  = company, },
+            new Person { Id = 4, FirstName = "3", LastName = "3", Address = secondAddress, Employer  = company, },
+            new Person { Id = 5, FirstName = "4", LastName = "4", Address = secondAddress, Employer  = company, },
+        ];
 
         _mapperlyComplexMapper = new MapperlyComplexMapper();
         ConfigureAutoMapper();
@@ -54,12 +66,37 @@ public partial class ComplexBenchmark
 
         var jsonOpts = new JsonSerializerOptions() { WriteIndented = true, ReferenceHandler = ReferenceHandler.Preserve };
 
-        var manual   = JsonSerializer.Serialize(Manual(),          jsonOpts);
+        Console.WriteLine("Verifing mappers...");
+
+        var manual   = JsonSerializer.Serialize(Manual(), jsonOpts);
+#if Debug
+        Console.WriteLine("Manual:");
+        Console.WriteLine(manual);
+#endif
 
         var aot      = JsonSerializer.Serialize(AotObjectMapper(), jsonOpts);
-        var mapperly = JsonSerializer.Serialize(Mapperly(),        jsonOpts);
-        var auto     = JsonSerializer.Serialize(AutoMapper(),      jsonOpts);
-        var mapster     = JsonSerializer.Serialize(Mapster(),      jsonOpts);
+#if Debug
+        Console.WriteLine("aot:");
+        Console.WriteLine(aot);
+#endif
+
+        var mapperly = JsonSerializer.Serialize(Mapperly(), jsonOpts);
+#if Debug
+        Console.WriteLine("mapperly:");
+        Console.WriteLine(mapperly);
+#endif
+
+        var auto     = JsonSerializer.Serialize(AutoMapper(), jsonOpts);
+#if Debug
+        Console.WriteLine("auto:");
+        Console.WriteLine(auto);
+#endif
+
+        var mapster  = JsonSerializer.Serialize(Mapster(), jsonOpts);
+#if Debug
+        Console.WriteLine("mapster:");
+        Console.WriteLine(mapster);
+#endif
 
 #pragma warning disable LOCAT010
         if (aot != manual)
