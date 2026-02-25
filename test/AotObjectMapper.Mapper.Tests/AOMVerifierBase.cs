@@ -10,10 +10,7 @@ namespace AotObjectMapper.Mapper.Tests;
 
 public abstract class AOMVerifierBase
 {
-    public async static Task VerifyGeneratorDiagnosticsAsync(
-        string                                         code,
-        IEnumerable<DiagnosticResult>?                 expectedDiagnostics      = null,
-        CancellationToken                              cancellationToken        = default)
+    public static async Task VerifyGeneratorDiagnosticsAsync(string code, IEnumerable<DiagnosticResult>? expectedDiagnostics = null, CancellationToken cancellationToken = default)
     {
         var test = new CSharpSourceGeneratorTest<MapperGenerator, DefaultVerifier>()
         {
