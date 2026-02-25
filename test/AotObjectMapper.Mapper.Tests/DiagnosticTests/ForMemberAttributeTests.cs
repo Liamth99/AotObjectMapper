@@ -71,7 +71,7 @@ public class ForMemberAttributeTests : AOMVerifierBase
           code,
           [
               DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureNotStaticId).WithLocation(0).WithArguments("GetId"),
-              DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureReturnTypeId).WithLocation(3).WithArguments("GetId", "Int32"),
+              DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureReturnTypeId).WithLocation(3).WithArguments("GetId", "int"),
               DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureParameterTypeId).WithLocation(1).WithArguments("First" ,"GetId", "T1"),
               DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureParameterTypeId).WithLocation(2).WithArguments("Second" ,"GetId", "MapperContextBase"),
           ],
@@ -139,7 +139,7 @@ public class ForMemberAttributeTests : AOMVerifierBase
         }
         """;
 
-        await VerifyGeneratorDiagnosticsAsync(code, [DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureReturnTypeId).WithLocation(0).WithArguments("GetId", "Int32")], cancellationToken: TestContext.Current.CancellationToken);
+        await VerifyGeneratorDiagnosticsAsync(code, [DiagnosticResult.CompilerError(AOMDiagnostics.MethodHasIncorrectSignatureReturnTypeId).WithLocation(0).WithArguments("GetId", "int")], cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]

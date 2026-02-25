@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -198,7 +199,10 @@ public sealed class MethodGenerationInfo
                                  .OfType<MethodDeclarationSyntax>()
                                  .FirstOrDefault();
 
-               context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM100_MethodHasIncorrectSignatureReturnType, declaration.ReturnType.GetLocation(), mapToMethod.Symbol.Name, destProp.Type.Name));
+                var properties = ImmutableDictionary<string, string>.Empty
+                    .Add("ExpectedReturnType", destProp.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+
+               context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM100_MethodHasIncorrectSignatureReturnType, declaration.ReturnType.GetLocation(), properties, mapToMethod.Symbol.Name, properties["ExpectedReturnType"]));
 
                 hasError = true;
             }
