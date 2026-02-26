@@ -63,7 +63,7 @@ public class ForMemberAttributeTests : AOMVerifierBase
         public partial class TMapper
         {
             [ForMember<T1, T2>("Id")]
-            private {|#3:double|} {|#0:GetId|}(T2 {|#1:src|}, T1 {|#2:ctx|}) => 0;
+            private {|#3:double|} {|#0:GetId|}({|#1:T2|} src, {|#2:T1|} ctx) => 0;
         }
         """;
 
@@ -167,7 +167,7 @@ public class ForMemberAttributeTests : AOMVerifierBase
         public partial class TMapper
         {
             [ForMember<T1, T2>("Id")]
-            private static int GetId(T2 {|#0:src|}) => 0;
+            private static int GetId({|#0:T2|} src) => 0;
         }
         """;
 
@@ -199,7 +199,7 @@ public class ForMemberAttributeTests : AOMVerifierBase
         public partial class TMapper
         {
             [ForMember<T1, T2>("Id")]
-            private static int GetId(T1 src, MapperContext {|#0:ctx|}) => 0;
+            private static int GetId(T1 src, {|#0:MapperContext|} ctx) => 0;
         }
         """;
 

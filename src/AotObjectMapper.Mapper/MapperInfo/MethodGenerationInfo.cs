@@ -172,21 +172,40 @@ public sealed class MethodGenerationInfo
 
             var sourceType = mapToMethod.Attribute.AttributeClass!.TypeArguments[0];
 
-            if (mapToMethod.Symbol.Parameters.Length is 0 || !mapToMethod.Symbol.Parameters[0].Type.Equals(sourceType, SymbolEqualityComparer.Default))
+            if (mapToMethod.Symbol.Parameters.Length is 0)
             {
-                foreach (var location in mapToMethod.Symbol.Parameters[0].Locations)
+                foreach (var location in mapToMethod.Symbol.Locations)
                 {
                     context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, location, "First", mapToMethod.Symbol.Name, sourceType.Name));
                 }
                 hasError = true;
             }
 
+            else if (!mapToMethod.Symbol.Parameters[0].Type.Equals(sourceType, SymbolEqualityComparer.Default))
+            {
+                var declaration = mapToMethod
+                                 .Symbol
+                                 .DeclaringSyntaxReferences
+                                 .Select(r => r.GetSyntax(context.CancellationToken))
+                                 .OfType<MethodDeclarationSyntax>()
+                                 .FirstOrDefault();
+
+                context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, declaration.ParameterList.Parameters[0].Type.GetLocation(), "First", mapToMethod.Symbol.Name, sourceType.Name));
+
+                hasError = true;
+            }
+
             if(mapToMethod.Symbol.Parameters.Length > 1 && !mapToMethod.Symbol.Parameters[1].Type.ToDisplayString().Equals("AotObjectMapper.Abstractions.Models.MapperContextBase", StringComparison.InvariantCulture))
             {
-                foreach (var location in mapToMethod.Symbol.Parameters[1].Locations)
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, location, "Second", mapToMethod.Symbol.Name, "MapperContextBase"));
-                }
+                var declaration = mapToMethod
+                                 .Symbol
+                                 .DeclaringSyntaxReferences
+                                 .Select(r => r.GetSyntax(context.CancellationToken))
+                                 .OfType<MethodDeclarationSyntax>()
+                                 .FirstOrDefault();
+
+                context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, declaration.ParameterList.Parameters[1].Type.GetLocation(), "Second", mapToMethod.Symbol.Name, "MapperContextBase"));
+                
                 hasError = true;
             }
 
