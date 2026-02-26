@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.Simplification;
 
 namespace AotObjectMapper.Mapper.CodeFixes;
 
-[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(Aom100Fix)), Shared]
+[ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(Aom101Fix)), Shared]
 public sealed class Aom101Fix : CodeFixProvider
 {
     public override ImmutableArray<string> FixableDiagnosticIds => [AOMDiagnostics.MethodHasIncorrectSignatureParameterTypeId];
