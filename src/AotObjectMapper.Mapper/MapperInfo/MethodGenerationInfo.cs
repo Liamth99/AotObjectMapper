@@ -190,7 +190,10 @@ public sealed class MethodGenerationInfo
                                  .OfType<MethodDeclarationSyntax>()
                                  .FirstOrDefault();
 
-                context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, declaration.ParameterList.Parameters[0].Type.GetLocation(), "First", mapToMethod.Symbol.Name, sourceType.Name));
+                var properties = ImmutableDictionary<string, string>.Empty
+                    .Add("ExpectedType", sourceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+
+                context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, declaration.ParameterList.Parameters[0].Type.GetLocation(), properties, "First", mapToMethod.Symbol.Name, sourceType.Name));
 
                 hasError = true;
             }
@@ -204,8 +207,11 @@ public sealed class MethodGenerationInfo
                                  .OfType<MethodDeclarationSyntax>()
                                  .FirstOrDefault();
 
-                context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, declaration.ParameterList.Parameters[1].Type.GetLocation(), "Second", mapToMethod.Symbol.Name, "MapperContextBase"));
-                
+                var properties = ImmutableDictionary<string, string>.Empty
+                    .Add("ExpectedType", "MapperContextBase");
+
+                context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM101_MethodHasIncorrectSignatureParameterType, declaration.ParameterList.Parameters[1].Type.GetLocation(), properties, "Second", mapToMethod.Symbol.Name, "MapperContextBase"));
+
                 hasError = true;
             }
 
