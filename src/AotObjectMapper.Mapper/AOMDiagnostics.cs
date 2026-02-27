@@ -120,8 +120,8 @@ public static class AOMDiagnostics
     public const string PreferNameOfId = "AOM202";
     public static readonly DiagnosticDescriptor AOM202_PreferNameOf = new (
         id: PreferNameOfId, 
-        title: "Prefer using `nameof()` over raw string",
-        messageFormat: "`{0}` is a valid member name, but nameof({1}) is preferred",
+        title: "Prefer using nameof() over literal string",
+        messageFormat: "Prefer using nameof({0}.{1}) over \"{1}\"",
         category: DiagnosticCategories.Design, 
         defaultSeverity: DiagnosticSeverity.Warning, 
         isEnabledByDefault: true); 

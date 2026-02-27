@@ -9,7 +9,7 @@
 /// <param name="sourcePropertyName">The name of the property or field in the source class.</param>
 /// <param name="destinationPropertyName">The name of the property or field in the destination class.</param>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class MapToAttribute<TSource, TDestination>(string sourcePropertyName, string destinationPropertyName) : Attribute
+public class MapToAttribute<TSource, TDestination>([PreferNameOf(nameof(TSource))] string sourcePropertyName, [PreferNameOf(nameof(TDestination))] string destinationPropertyName) : Attribute
 {
     /// Gets the name of the property or field in the source class that is mapped to a corresponding property or field in the destination class.
     public string SourcePropertyName      { get; } = sourcePropertyName;
