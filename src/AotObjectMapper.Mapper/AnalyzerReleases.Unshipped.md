@@ -4,7 +4,6 @@
 -----------|---------------|----------|---------------------------------------------------------------------------
  AOM103    | Performance   | Warning  | Method does not require MapperContext and the parameter should be removed 
  AOM200    | Configuration | Error    | Maps must be distinct                                                     
- AOM202    | Design        | Warning  | Prefer using nameof() over raw string                                     
  AOM203    | Usage         | Error    | UseFormatProvider destination type should be valid type                   
  AOM204    | Design        | Warning  | Potential recursive mapping detected                                      
  AOM205    | Usage         | Error    | Mapper should only have one default FormatProvider                        
