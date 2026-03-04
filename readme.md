@@ -25,7 +25,7 @@ AotObjectMapper is distributed as a [NuGet package](https://www.nuget.org/packag
 
 ## Via .NET CLI
 ```shell
-dotnet add package AotObjectMapper
+dotnet add package AotObjectMapper.Mapper
 ```
 
 ## Via Visual Studio
