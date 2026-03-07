@@ -21,6 +21,8 @@ public abstract class AOMVerifierBase
                 Sources = { code, },
             },
             TestBehaviors = TestBehaviors.SkipGeneratedSourcesCheck,
+            DisabledDiagnostics = { "CS0656", },
+            ReferenceAssemblies = ReferenceAssemblies.Net.Net80,
         };
 
         test.TestState.AdditionalReferences.Add(MetadataReference.CreateFromFile(typeof(GenerateMapperAttribute).Assembly.Location));
