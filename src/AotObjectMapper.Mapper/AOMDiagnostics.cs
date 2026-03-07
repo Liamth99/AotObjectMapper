@@ -215,9 +215,9 @@ public static class AOMDiagnostics
     public static readonly DiagnosticDescriptor AOM302_RequiredMemberNotMapped = new (
         id: RequiredMemberNotMappedId, 
         title: "Required member not mapped",
-        messageFormat: "Required member `{0}` on `{1}` should be mapped",
+        messageFormat: "Required member `{0}` on `{1}` must be mapped, or enable SuppressNullWarnings",
         category: DiagnosticCategories.TypeSafety, 
-        defaultSeverity: DiagnosticSeverity.Warning, 
+        defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     
