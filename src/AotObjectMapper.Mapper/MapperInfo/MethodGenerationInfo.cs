@@ -238,18 +238,27 @@ public sealed class MethodGenerationInfo
             assignments.Add(new (destProp, $"{mapToMethod.Symbol.Name}(src{(mapToMethod.Symbol.Parameters.Length is 2 ? ", ctx" : "")})"));
         }
 
-        if (SuppressNullWarnings)
+
+        foreach (var destProp in DestinationProperties.Values)
         {
-            foreach (var destProp in DestinationProperties.Values)
+            if (assignments.Any(x => x.propertySymbol.Equals(destProp, SymbolEqualityComparer.Default)))
+                continue;
+
+            if (destProp.IsRequired)
             {
-                if (!destProp.IsRequired)
+                if (!SuppressNullWarnings)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM302_RequiredMemberNotMapped, MapAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation(), messageArgs: [destProp.Name, DestinationType.Name]));
                     continue;
+                }
 
-                if (assignments.Any(x => x.propertySymbol.Equals(destProp, SymbolEqualityComparer.Default)))
-                    continue;
-
-                assignments.Add(new (destProp, "null!"));
+                assignments.Add(new(destProp, "null!"));
             }
+
+            if(IgnoredMembers.Contains(destProp.Name))
+                continue;
+
+            context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM400_UnmappedDestinationMember, MapAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation(), messageArgs: [destProp.Name, DestinationType.Name]));
         }
 
         return assignments.ToArray();

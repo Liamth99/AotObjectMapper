@@ -12,8 +12,6 @@
  AOM209    | Configuration | Error    | Duplicate configuration for member                                        
  AOM300    | TypeSafety    | Warning  | No map found for destination type                                         
  AOM301    | TypeSafety    | Warning  | Nullable assignment to non-nullable property                              
- AOM302    | TypeSafety    | Warning  | Nullable assignment to non-nullable property                              
- AOM400    | Configuration | Warning  | Unmapped destination member                                               
  AOM401    | Design        | Error    | Property not publicly settable                                            
  AOM500    | TypeSafety    | Warning  | Potential loss of data when converting between types                      
  AOM501    | TypeSafety    | Warning  | Enum value does not exist on destination                                  
