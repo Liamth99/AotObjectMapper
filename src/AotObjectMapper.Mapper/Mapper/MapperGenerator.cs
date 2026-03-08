@@ -270,24 +270,27 @@ public class MapperGenerator : IIncrementalGenerator
         isb.AppendLine($"/// <see cref=\"global::{info.DestinationType.ToDisplayString()}\">{info.DestinationType.Name}</see> mapped from an instance of <see cref=\"global::{info.SourceType.ToDisplayString()}\">{info.SourceType.Name}</see>.");
         isb.AppendLine("/// </returns>");
 
+        StringBuilder remarks = new();
+
         if (info.PreserveReferences)
         {
-            isb.AppendLine("/// <remarks>");
-            isb.AppendLine("/// References are preserved<br/>");
-            isb.AppendLine("/// </remarks>");
+            remarks.AppendLine("/// References are preserved<br/>");
         }
 
         if (info.SuppressNullWarnings)
         {
-            isb.AppendLine("/// <remarks>");
-            isb.AppendLine("// Null Warnings Are Suppressed.<br/>");
-            isb.AppendLine("/// </remarks>");
+            remarks.AppendLine("/// Null Warnings Are Suppressed.<br/>");
         }
 
         if (info.IgnoredMembers.Length is not 0)
         {
-            isb.AppendLine("// <remarks>");
-            isb.AppendLine($"/// Ignores: {string.Join(", ", info.IgnoredMembers.Select(x => $"<see cref=\"{info.DestinationType.Name}.{x}\">{x}</see>"))}");
+            remarks.AppendLine($"/// Ignores: {string.Join(", ", info.IgnoredMembers)}");
+        }
+
+        if (remarks.Length > 0)
+        {
+            isb.AppendLine("/// <remarks>");
+            isb.AppendLine($"{remarks.ToString().TrimEnd()}");
             isb.AppendLine("/// </remarks>");
         }
     }
