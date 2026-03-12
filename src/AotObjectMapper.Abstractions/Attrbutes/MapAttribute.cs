@@ -9,7 +9,7 @@
 /// An optional list of member names to ignore during the mapping process. These members will not be included in the mapping logic.
 /// </param>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public sealed class MapAttribute<TSource, TDestination>(params string[] ignoredMembers) : Attribute
+public sealed class MapAttribute<TSource, TDestination>([PreferNameOf(nameof(TDestination))] params string[] ignoredMembers) : Attribute
 {
     /// Represents the collection of member names that should be ignored during the mapping process.
     public IEnumerable<string> IgnoredMembers { get; } = ignoredMembers;
