@@ -131,6 +131,35 @@ public class MissingMemberTests : AOMVerifierBase
     }
 
     [Fact]
+    public async Task MapAttribute_MemberHasNoSetter_NoDiagnostic()
+    {
+        const string code =
+            """
+            using System;
+            using AotObjectMapper.Abstractions.Attributes;
+            using AotObjectMapper.Abstractions.Enums;
+            using AotObjectMapper.Abstractions.Models;
+            
+            public class S;
+            
+            public class T
+            {
+                public string Prop => "";
+                public string Prop2 { get; } = "";
+            }
+
+            public partial class Top
+            {
+                [GenerateMapper]
+                [Map<S, T>("Prop")]
+                public partial class Mapper;
+            }
+            """;
+
+        await VerifyGeneratorDiagnosticsAsync(code, [], cancellationToken: TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
     public async Task MapAttribute_RequiredMemberIgnored_AOM302()
     {
         const string code =
