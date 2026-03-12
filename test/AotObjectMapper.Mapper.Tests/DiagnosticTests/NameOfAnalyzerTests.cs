@@ -135,4 +135,61 @@ public class NameOfAnalyzerTests : AOMVerifierBase
 
         await VerifyCodeFixAsync<PreferNameOfAnalyzer, Aom202Fix>(code, codeFix, [ExpectedDiagnostic("T2", "Id", 0)], TestContext.Current.CancellationToken);
     }
+
+    [Fact]
+    public async Task PreferNameOf_IEnumerableArguments_ReplacesString()
+    {
+        const string code =
+        """
+        using System;
+        using AotObjectMapper.Abstractions.Attributes;
+        using AotObjectMapper.Abstractions.Enums;
+        using AotObjectMapper.Abstractions.Models;
+
+        public class T1 { public int Id { get; set; } public string Name { get; set; } }
+        public class T2 { public int Id { get; set; } public string Name { get; set; } }
+
+        [GenerateMapper]
+        [Map<T1, T2>({|#0:"Id"|}, {|#1:"Name"|})]
+        public partial class TMapper;
+        """;
+
+        const string codeFix =
+        """
+        using System;
+        using AotObjectMapper.Abstractions.Attributes;
+        using AotObjectMapper.Abstractions.Enums;
+        using AotObjectMapper.Abstractions.Models;
+        
+        public class T1 { public int Id { get; set; } public string Name { get; set; } }
+        public class T2 { public int Id { get; set; } public string Name { get; set; } }
+
+        [GenerateMapper]
+        [Map<T1, T2>(nameof(T2.Id), nameof(T2.Name))]
+        public partial class TMapper;
+        """;
+
+        await VerifyCodeFixAsync<PreferNameOfAnalyzer, Aom202Fix>(code, codeFix, [ExpectedDiagnostic("T2", "Id", 0), ExpectedDiagnostic("T2", "Name", 1)], TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task PreferNameOf_IEnumerableArguments_AOM202()
+    {
+        const string code =
+        """
+        using System;
+        using AotObjectMapper.Abstractions.Attributes;
+        using AotObjectMapper.Abstractions.Enums;
+        using AotObjectMapper.Abstractions.Models;
+
+        public class T1 { public int Id { get; set; } public string Name { get; set; } }
+        public class T2 { public int Id { get; set; } public string Name { get; set; } }
+
+        [GenerateMapper]
+        [Map<T1, T2>({|#0:"Id"|}, {|#1:"Name"|})]
+        public partial class TMapper;
+        """;
+
+        await VerifyAnalyzerAsync<PreferNameOfAnalyzer>(code, [ExpectedDiagnostic("T2", "Id", 0), ExpectedDiagnostic("T2", "Name", 1)], TestContext.Current.CancellationToken);
+    }
 }

@@ -32,23 +32,33 @@ public class PreferNameOfAnalyzer : DiagnosticAnalyzer
         if (preferNameOfAttr is null)
             return;
 
+        var targetType = ResolveTargetType(preferNameOfAttr, parameter);
+        if (targetType is null)
+            return;
+
         var value = argumentOperation.Value;
 
-        if (value is ILiteralOperation literal && literal.ConstantValue.HasValue && literal.ConstantValue.Value is string memberName)
+        foreach (var literal in value.DescendantsAndSelf().OfType<ILiteralOperation>())
         {
-            var targetType = ResolveTargetType(preferNameOfAttr, parameter);
+            if (!literal.ConstantValue.HasValue)
+                continue;
 
-            if (targetType is null)
-                return;
+            if (literal.ConstantValue.Value is not string memberName)
+                continue;
 
-            if (targetType.GetMembers(memberName).Count(x => context.Compilation.IsSymbolAccessibleWithin(x, context.ContainingSymbol.ContainingAssembly)) > 0)
-            {
-                var properties = ImmutableDictionary<string, string?>.Empty
-                    .Add("Type", targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat))
-                    .Add("MemberName", memberName);
+            CheckMember(context, literal, memberName, targetType);
+        }
+    }
 
-                context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM202_PreferNameOf, value.Syntax.GetLocation(), properties, targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat), memberName));
-            }
+    private static void CheckMember(OperationAnalysisContext context, ILiteralOperation literal, string memberName, ITypeSymbol targetType)
+    {
+        if (targetType.GetMembers(memberName).Count(x => context.Compilation.IsSymbolAccessibleWithin(x, context.ContainingSymbol.ContainingAssembly)) > 0)
+        {
+            var properties = ImmutableDictionary<string, string?>.Empty
+                .Add("Type", targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat))
+                .Add("MemberName", memberName);
+
+            context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM202_PreferNameOf, literal.Syntax.GetLocation(), properties, targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat), memberName));
         }
     }
 
