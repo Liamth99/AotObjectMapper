@@ -244,6 +244,9 @@ public sealed class MethodGenerationInfo
             if (assignments.Any(x => x.propertySymbol.Equals(destProp, SymbolEqualityComparer.Default)))
                 continue;
 
+            if(destProp.SetMethod is null)
+                continue;
+
             if (destProp.IsRequired)
             {
                 if (!SuppressNullWarnings)
