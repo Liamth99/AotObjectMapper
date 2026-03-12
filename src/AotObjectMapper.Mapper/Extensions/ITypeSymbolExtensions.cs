@@ -2,6 +2,8 @@
 using System.Linq;
 using AotObjectMapper.Mapper.Info;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace AotObjectMapper.Mapper.Extensions;
 
@@ -9,6 +11,20 @@ public static class ITypeSymbolExtensions
 {
     extension(ITypeSymbol type)
     {
+        /// Retrieves the display name of a type, considering alias directives in the syntax tree.
+        public string GetDisplayTypeName(SemanticModel semanticModel, SyntaxNode location)
+        {
+            foreach (var symbol in semanticModel.LookupSymbols(location.SpanStart))
+            {
+                if (symbol is IAliasSymbol alias && alias.Target.Equals(type, SymbolEqualityComparer.Default))
+                {
+                    return alias.Name;
+                }
+            }
+
+            return type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        }
+
         public IEnumerable<IPropertySymbol> GetAllReadableProperties()
         {
             var seen = new HashSet<IPropertySymbol>(SymbolEqualityComparer.Default);

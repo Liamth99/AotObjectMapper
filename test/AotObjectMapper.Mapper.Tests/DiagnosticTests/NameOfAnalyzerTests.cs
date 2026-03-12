@@ -40,6 +40,40 @@ public class NameOfAnalyzerTests : AOMVerifierBase
     }
 
     [Fact]
+    public async Task PreferNameOf_StringArgTypeAlias_AOM202()
+    {
+        const string code =
+        """
+        using System;
+        using AotObjectMapper.Abstractions.Attributes;
+        using AotObjectMapper.Abstractions.Enums;
+        using AotObjectMapper.Abstractions.Models;
+        
+        namespace Space1
+        {
+            public class T1 { public int Id { get; set; } }
+            public class T2 { public int Id { get; set; } }
+        }
+        
+        namespace Space2
+        {
+            using S = Space1.T1;
+            using T = Space1.T2;
+        
+            [GenerateMapper]
+            [Map<S, T>]
+            public partial class TMapper
+            {
+                [ForMember<S, T>({|#0:"Id"|})]
+                private static int GetId(S src) => 0;
+            }
+        }
+        """;
+
+        await VerifyAnalyzerAsync<PreferNameOfAnalyzer>(code, [ExpectedDiagnostic("T", "Id", 0)], TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
     public async Task PreferNameOf_ConstArg_NoDiagnostic()
     {
         const string code =
@@ -134,6 +168,68 @@ public class NameOfAnalyzerTests : AOMVerifierBase
         """;
 
         await VerifyCodeFixAsync<PreferNameOfAnalyzer, Aom202Fix>(code, codeFix, [ExpectedDiagnostic("T2", "Id", 0)], TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task PreferNameOf_StringArgTypeAlias_ReplacesStrings()
+    {
+        const string code =
+            """
+            using System;
+            using AotObjectMapper.Abstractions.Attributes;
+            using AotObjectMapper.Abstractions.Enums;
+            using AotObjectMapper.Abstractions.Models;
+
+            namespace Space1
+            {
+                public class T1 { public int Id { get; set; } }
+                public class T2 { public int Id { get; set; } }
+            }
+
+            namespace Space2
+            {
+                using S = Space1.T1;
+                using T = Space1.T2;
+
+                [GenerateMapper]
+                [Map<S, T>]
+                public partial class TMapper
+                {
+                    [ForMember<S, T>({|#0:"Id"|})]
+                    private static int GetId(S src) => 0;
+                }
+            }
+            """;
+
+        const string codeFix =
+            """
+            using System;
+            using AotObjectMapper.Abstractions.Attributes;
+            using AotObjectMapper.Abstractions.Enums;
+            using AotObjectMapper.Abstractions.Models;
+
+            namespace Space1
+            {
+                public class T1 { public int Id { get; set; } }
+                public class T2 { public int Id { get; set; } }
+            }
+
+            namespace Space2
+            {
+                using S = Space1.T1;
+                using T = Space1.T2;
+
+                [GenerateMapper]
+                [Map<S, T>]
+                public partial class TMapper
+                {
+                    [ForMember<S, T>(nameof(T.Id))]
+                    private static int GetId(S src) => 0;
+                }
+            }
+            """;
+
+        await VerifyCodeFixAsync<PreferNameOfAnalyzer, Aom202Fix>(code, codeFix, [ExpectedDiagnostic("T", "Id", 0)], TestContext.Current.CancellationToken);
     }
 
     [Fact]

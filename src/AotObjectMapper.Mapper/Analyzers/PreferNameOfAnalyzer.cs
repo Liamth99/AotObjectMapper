@@ -52,13 +52,15 @@ public class PreferNameOfAnalyzer : DiagnosticAnalyzer
 
     private static void CheckMember(OperationAnalysisContext context, ILiteralOperation literal, string memberName, ITypeSymbol targetType)
     {
+        var semanticModel = context.Operation.SemanticModel!;
+
         if (targetType.GetMembers(memberName).Count(x => context.Compilation.IsSymbolAccessibleWithin(x, context.ContainingSymbol.ContainingAssembly)) > 0)
         {
             var properties = ImmutableDictionary<string, string?>.Empty
-                .Add("Type", targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat))
+                .Add("Type", targetType.GetDisplayTypeName(semanticModel, literal.Syntax))
                 .Add("MemberName", memberName);
 
-            context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM202_PreferNameOf, literal.Syntax.GetLocation(), properties, targetType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat), memberName));
+            context.ReportDiagnostic(Diagnostic.Create(AOMDiagnostics.AOM202_PreferNameOf, literal.Syntax.GetLocation(), properties, targetType.GetDisplayTypeName(semanticModel, literal.Syntax), memberName));
         }
     }
 
