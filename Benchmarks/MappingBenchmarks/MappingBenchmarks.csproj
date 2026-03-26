@@ -12,7 +12,7 @@
       <PackageReference Include="AutoMapper" Version="16.1.1" />
       <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
       <PackageReference Include="BenchmarkDotNetVisualizer" Version="2.1.0" />
-      <PackageReference Include="Mapster" Version="10.0.1" />
+      <PackageReference Include="Mapster" Version="10.0.6" />
       <PackageReference Include="Riok.Mapperly" Version="4.3.1" />
     </ItemGroup>
 
