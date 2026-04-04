@@ -191,7 +191,7 @@ public class MapperGenerator : IIncrementalGenerator
     {
         var propertyAssignments = info.PropertyAssignments;
 
-        GenerateMethodDocs(info, isb);
+        GenerateMethodDocs(info, isb, compilation);
 
         if (!info.DestinationType.TryGetBlankTypeConstructor(info, out var ctor, out var ctorArgs) && !info.DestinationType.IsAbstract && info.DestinationType.TypeKind is not TypeKind.Interface)
         {
@@ -262,7 +262,7 @@ public class MapperGenerator : IIncrementalGenerator
         }
     }
 
-    private static void GenerateMethodDocs(MethodGenerationInfo info, IndentedStringBuilder isb)
+    private static void GenerateMethodDocs(MethodGenerationInfo info, IndentedStringBuilder isb, Compilation compilation)
     {
         isb.AppendLine("/// <param name=\"ctx\">Context used to manage state wile mapping</param>");
         isb.AppendLine("/// <param name=\"src\">The source object to map</param>");
@@ -270,7 +270,8 @@ public class MapperGenerator : IIncrementalGenerator
         isb.AppendLine($"/// <see cref=\"global::{info.DestinationType.ToDisplayString()}\">{info.DestinationType.Name}</see> mapped from an instance of <see cref=\"global::{info.SourceType.ToDisplayString()}\">{info.SourceType.Name}</see>.");
         isb.AppendLine("/// </returns>");
 
-        StringBuilder remarks = new();
+        StringBuilder remarks   = new();
+        List<string>  keyUsages = [];
 
         if (info.PreserveReferences)
         {
@@ -284,8 +285,18 @@ public class MapperGenerator : IIncrementalGenerator
 
         if (info.IgnoredMembers.Length is not 0)
         {
-            remarks.AppendLine($"/// Ignores: {string.Join(", ", info.IgnoredMembers)}");
+            remarks.AppendLine($"/// Ignores: {string.Join(", ", info.IgnoredMembers)}<br/>");
         }
+
+        foreach (var preMapMethod in info.PreMapMethods)
+            keyUsages.AddRange(GetContextKeysUsed(preMapMethod.Symbol, compilation));
+
+        foreach (var postMapMethod in info.PostMapMethods)
+            keyUsages.AddRange(GetContextKeysUsed(postMapMethod.Symbol, compilation));
+
+        if(keyUsages.Count > 0)
+            remarks.AppendLine($"/// Keys used from context: {string.Join(", ", keyUsages.Distinct().Select(x => $"<c>{x}</c>"))}<br/>");
+
 
         if (remarks.Length > 0)
         {
@@ -339,5 +350,83 @@ public class MapperGenerator : IIncrementalGenerator
 
             isb.AppendLine("ctx.DecrementDepth();");
         }
+    }
+
+    private readonly static string[] contextTypes = ["AotObjectMapper.Abstractions.Models.MapperContextBase", "AotObjectMapper.Abstractions.Models.MapperContext", "AotObjectMapper.Abstractions.Models.ConcurrentMapperContext", ];
+
+    private static List<string> GetContextKeysUsed(IMethodSymbol methodSymbol, Compilation compilation)
+    {
+        if(!methodSymbol.Parameters.Any(x => contextTypes.Contains(x.Type.ToDisplayString())))
+            return [];
+
+        var body = methodSymbol.DeclaringSyntaxReferences.Select(x => (x.GetSyntax() as MethodDeclarationSyntax)!).FirstOrDefault(x => x.Body is not null)?.Body;
+
+        if(body is null)
+            return [];
+
+        List<string> results = [];
+
+        // ctx.AdditionalContext["test"]
+        foreach (var elementAccess in body.DescendantNodes().OfType<ElementAccessExpressionSyntax>())
+        {
+            var semanticModel = compilation.GetSemanticModel(elementAccess.SyntaxTree);
+            if (IsAdditionalContextAccess(elementAccess.Expression, semanticModel))
+            {
+                var argument = elementAccess.ArgumentList.Arguments.FirstOrDefault();
+
+                if(argument is null)
+                    continue;
+
+                var constantValue = semanticModel.GetConstantValue(argument.Expression);
+                if (constantValue.HasValue && constantValue.Value is string key)
+                {
+                    results.Add(key);
+                }
+            }
+        }
+
+        // ctx.AdditionalContext.TryGetValue && ContainsKey
+        foreach (var invocation in body.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        {
+            if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+            {
+                var semanticModel = compilation.GetSemanticModel(invocation.SyntaxTree);
+
+                if (memberAccess.Expression is ExpressionSyntax expr && IsAdditionalContextAccess(expr, semanticModel))
+                {
+                    var dictionaryMethodSymbol = semanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
+
+                    if (dictionaryMethodSymbol?.Name is "TryGetValue" or "ContainsKey")
+                    {
+                        var firstArg = invocation.ArgumentList.Arguments.FirstOrDefault();
+
+                        if (firstArg is not null)
+                        {
+                            var constantValue = semanticModel.GetConstantValue(firstArg.Expression);
+
+                            if (constantValue.HasValue && constantValue.Value is string key)
+                            {
+                                results.Add(key);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return results;
+    }
+
+    private static bool IsAdditionalContextAccess(ExpressionSyntax expression, SemanticModel semanticModel)
+    {
+        var symbol = semanticModel.GetSymbolInfo(expression).Symbol;
+
+        if (symbol is not IPropertySymbol prop)
+            return false;
+
+        if (prop.Name != "AdditionalContext")
+            return false;
+
+        return contextTypes.Contains(prop.ContainingType.ToDisplayString());
     }
 }
