@@ -352,9 +352,11 @@ public class MapperGenerator : IIncrementalGenerator
         }
     }
 
+    private readonly static string[] contextTypes = ["AotObjectMapper.Abstractions.Models.MapperContextBase", "AotObjectMapper.Abstractions.Models.MapperContext", "AotObjectMapper.Abstractions.Models.ConcurrentMapperContext", ];
+
     private static List<string> GetContextKeysUsed(IMethodSymbol methodSymbol, Compilation compilation)
     {
-        if(!methodSymbol.Parameters.Any(x => x.Type.ToDisplayString() == "AotObjectMapper.Abstractions.Models.MapperContextBase"))
+        if(!methodSymbol.Parameters.Any(x => contextTypes.Contains(x.Type.ToDisplayString())))
             return [];
 
         var body = methodSymbol.DeclaringSyntaxReferences.Select(x => (x.GetSyntax() as MethodDeclarationSyntax)!).FirstOrDefault(x => x.Body is not null)?.Body;
@@ -367,15 +369,17 @@ public class MapperGenerator : IIncrementalGenerator
         // ctx.AdditionalContext["test"]
         foreach (var elementAccess in body.DescendantNodes().OfType<ElementAccessExpressionSyntax>())
         {
-
-            if (IsAdditionalContextAccess(elementAccess.Expression, compilation.GetSemanticModel(elementAccess.SyntaxTree)))
+            var semanticModel = compilation.GetSemanticModel(elementAccess.SyntaxTree);
+            if (IsAdditionalContextAccess(elementAccess.Expression, semanticModel))
             {
                 var argument = elementAccess.ArgumentList.Arguments.FirstOrDefault();
 
-                if (argument?.Expression is LiteralExpressionSyntax literal &&
-                    literal.IsKind(SyntaxKind.StringLiteralExpression))
+                if(argument is null)
+                    continue;
+
+                var constantValue = semanticModel.GetConstantValue(argument.Expression);
+                if (constantValue.HasValue && constantValue.Value is string key)
                 {
-                    var key = literal.Token.ValueText;
                     results.Add(key);
                 }
             }
@@ -388,7 +392,6 @@ public class MapperGenerator : IIncrementalGenerator
             {
                 var semanticModel = compilation.GetSemanticModel(invocation.SyntaxTree);
 
-
                 if (memberAccess.Expression is ExpressionSyntax expr && IsAdditionalContextAccess(expr, semanticModel))
                 {
                     var dictionaryMethodSymbol = semanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
@@ -397,10 +400,14 @@ public class MapperGenerator : IIncrementalGenerator
                     {
                         var firstArg = invocation.ArgumentList.Arguments.FirstOrDefault();
 
-                        if (firstArg?.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.StringLiteralExpression))
+                        if (firstArg is not null)
                         {
-                            if(literal.IsKind(SyntaxKind.StringLiteralExpression))
-                                results.Add(literal.Token.ValueText);
+                            var constantValue = semanticModel.GetConstantValue(firstArg.Expression);
+
+                            if (constantValue.HasValue && constantValue.Value is string key)
+                            {
+                                results.Add(key);
+                            }
                         }
                     }
                 }
@@ -420,6 +427,6 @@ public class MapperGenerator : IIncrementalGenerator
         if (prop.Name != "AdditionalContext")
             return false;
 
-        return prop.ContainingType.ToDisplayString() == "AotObjectMapper.Abstractions.Models.MapperContextBase";
+        return contextTypes.Contains(prop.ContainingType.ToDisplayString());
     }
 }
